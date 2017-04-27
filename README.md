@@ -1,5 +1,6 @@
 # FastRationals.jl
-strawman as proof-of-concept
+
+#### strawman as proof-of-concept
 =======
 
 ```julia
