@@ -18,14 +18,20 @@ macro fastest(this)
    :((@benchmark $this).times[1])
 end
 
-a_q = Rational{Int64}(5,77);         b_q = Rational{Int64}(100, 17);
-a_fastq = FastRational{Int64}(5,77); b_fastq = FastRational{Int64}(100,17);
+a_numer, a_denom = Int64(5), Int64(77)
+b_numer, b_denom = Int64(100), Int64(17)
+
+a_q = Rational(a_numer, a_denom);         b_q = Rational(b_numer, b_denom);
+a_fastq = FastRational(a_numer, a_denom); b_fastq = FastRational{Int64}(b_numer, b_denom);
 
 fld( (@fastest $a_q + $b_q), (@fastest $a_fastq + $b_fastq) )
 fld( (@fastest $a_q * $b_q), (@fastest $a_fastq * $b_fastq) )
 
-a_q = Rational{Int32}(5,77);         b_q = Rational{Int32}(100, 17);
-a_fastq = FastRational{Int32}(5,77); b_fastq = FastRational{Int32}(100,17);
+a_numer, a_denom = Int32(5), Int32(77)
+b_numer, b_denom = Int32(100), Int32(17)
+
+a_q = Rational(a_numer, a_denom);         b_q = Rational(b_numer, b_denom);
+a_fastq = FastRational(a_numer, a_denom); b_fastq = FastRational{Int64}(b_numer, b_denom);
 
 fld( (@fastest $a_q + $b_q), (@fastest $a_fastq + $b_fastq) )
 fld( (@fastest $a_q * $b_q), (@fastest $a_fastq * $b_fastq) )
