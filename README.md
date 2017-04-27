@@ -1,10 +1,10 @@
 # FastRationals.jl
 
 ##### Copyright ©2017 by Jeffrey Sarnoff.
+
 ~~~~~~~~~
 
 #### proof-of-concept
------
 
 
 ```julia
