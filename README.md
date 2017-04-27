@@ -1,7 +1,11 @@
 # FastRationals.jl
 
-#### strawman as proof-of-concept
-=======
+##### Copyright ©2017 by Jeffrey Sarnoff.
+~~~~~~~~~
+
+#### proof-of-concept
+-----
+
 
 ```julia
 Pkg.clone(...)
