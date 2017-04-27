@@ -30,7 +30,6 @@ FastRational{T}(numer::T, denom::T) = FastRational{MAYREDUCE, T}(numer, denom)
 FastRational{T}(::Type{MAYREDUCE}, numer::T, denom::T) = FastRational{MAYREDUCE, T}(numer, denom)
 FastRational{T}(::Type{ISREDUCED}, numer::T, denom::T) = FastRational{ISREDUCED, T}(numer, denom)
 
-
 numerator{R, T}(q::FastRational{R, T}) = q.numer
 denominator{R, T}(q::FastRational{R, T}) = q.denom
 
