@@ -56,13 +56,13 @@ end
 
 function cannonical{T}(numer::T, denom::T)
     denom = abs(denom)
-    gcdivisor = gcd(denom, numer)
+    gcdivisor = fastgcd(denom, numer)
     FastRational(ISREDUCED, div(numer, gcdivisor), div(denom, gcdivisor))
 end
 
 function cannonical{R,T}(q::FastRational{R,T})
     denom = abs(q.denom)
-    gcdivisor = gcd(denom, q.numer)
+    gcdivisor = fastgcd(denom, q.numer)
     FastRational(ISREDUCED, div(q.numer, gcdivisor), div(denom, gcdivisor))
 end
 
