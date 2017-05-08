@@ -38,6 +38,8 @@ mayreduce{R,T}(q::FastRational{R, T}) = R === MAYREDUCE
 
 # http://lemire.me/blog/2013/12/26/fastest-way-to-compute-the-greatest-common-divisor/
 function fastgcd{T}(u::T, v::T)
+    u = abs(u)
+    v = abs(v)
     u===zero(T) && return v
     v===zero(T) && return u
     shift = trailing_zeros(u|v)
