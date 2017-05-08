@@ -36,35 +36,16 @@ denominator{R, T}(q::FastRational{R, T}) = q.denom
 isreduced{R,T}(q::FastRational{R, T}) = R === ISREDUCED
 mayreduce{R,T}(q::FastRational{R, T}) = R === MAYREDUCE
 
-# http://lemire.me/blog/2013/12/26/fastest-way-to-compute-the-greatest-common-divisor/
-function fastgcd{T}(u::T, v::T)
-    u = abs(u)
-    v = abs(v)
-    u===zero(T) && return v
-    v===zero(T) && return u
-    shift = trailing_zeros(u|v)
-    u = u >> trailing_zeros(u)
-    v = v >> trailing_zeros(v)
-    u, v = minmax(u, v)
-    v = v - u
-    while (v !== zero(T))
-        v = v >> trailing_zeros(v)
-        u, v = minmax(u, v)
-        v = v - u
-     end
-     return u << shift
-end
-
 
 function cannonical{T}(numer::T, denom::T)
     denom = abs(denom)
-    gcdivisor = fastgcd(denom, numer)
+    gcdivisor = gcd(denom, numer)
     FastRational(ISREDUCED, div(numer, gcdivisor), div(denom, gcdivisor))
 end
 
 function cannonical{R,T}(q::FastRational{R,T})
     denom = abs(q.denom)
-    gcdivisor = fastgcd(denom, q.numer)
+    gcdivisor = gcd(denom, q.numer)
     FastRational(ISREDUCED, div(q.numer, gcdivisor), div(denom, gcdivisor))
 end
 
