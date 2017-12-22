@@ -33,9 +33,9 @@ b_numer, b_denom = Int32(100), Int32(17)
 
 a_q = Rational(a_numer, a_denom);         b_q = Rational(b_numer, b_denom);
 a_fastq = FastRational(a_numer, a_denom); b_fastq = FastRational(b_numer, b_denom);
-
-fld( (@fastest $a_q + $b_q), (@fastest $a_fastq + $b_fastq) ) # I get  9.0
-fld( (@fastest $a_q * $b_q), (@fastest $a_fastq * $b_fastq) ) # I get 15.0
+                                                              # on two machines
+fld( (@fastest $a_q + $b_q), (@fastest $a_fastq + $b_fastq) ) # I get  9.0, 13.0
+fld( (@fastest $a_q * $b_q), (@fastest $a_fastq * $b_fastq) ) # I get 15.0, 25.0
 
 
 ```
