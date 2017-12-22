@@ -315,4 +315,32 @@ FastRational(x::Rational{T}) where {T<:SignedInt, R<:Reduceable} =
 Rational(x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} =
     convert(Rational{T}, x)
 
+Base.:(==)(x::Rational{T}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
+   numerator(x) == numerator(y) && denominator(x) == denominator(y)
+Base.:(!=)(x::Rational{T}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
+   !(x == y)
+Base.:(==)(x::FastRational{T, IsReduced}, y::Rational{T}) where {T<:SignedInt} =
+   numerator(x) == numerator(y) && denominator(x) == denominator(y)
+Base.:(!=)(x::FastRational{T, IsReduced}, y::Rational{T}) where {T<:SignedInt} =
+   !(x == y)
+
+Base.:(<)(x::Rational{T}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
+    x < Rational{T}(y)
+Base.:(<=)(x::Rational{T}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
+    x <= Rational{T}(y)
+Base.:(<)(x::FastRational{T, IsReduced}, y::Rational{T}) where {T<:SignedInt} =
+    Rational{T}(x) < y
+Base.:(<=)(x::FastRational{T, IsReduced}, y::Rational{T}) where {T<:SignedInt} =
+    Rational{T}(x) <= y
+
+Base.:(<)(x::Rational{T}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
+    x < cannonical(y)   
+Base.:(<=)(x::Rational{T}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
+   x <= cannonical(y)
+Base.:(<)(x::FastRational{T, MayReduce}, y::Rational{T}) where {T<:SignedInt} =
+   cannonical(x) < y
+Base.:(<=)(x::FastRational{T, MayReduce}, y::Rational{T}) where {T<:SignedInt} =
+   cannonical(x) <= y
+
+
 end # module
