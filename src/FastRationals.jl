@@ -344,92 +344,34 @@ Base.:(<)(x::FastRational{T, IsReduced}, y::Rational{T}) where {T<:SignedInt} =
 Base.:(<=)(x::FastRational{T, IsReduced}, y::Rational{T}) where {T<:SignedInt} =
     Rational{T}(x) <= y
 
-Base.:(<)(x::Rational{T}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-    x < cannonical(y)   
-Base.:(<=)(x::Rational{T}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   x <= cannonical(y)
-Base.:(<)(x::FastRational{T, MayReduce}, y::Rational{T}) where {T<:SignedInt} =
-   cannonical(x) < y
-Base.:(<=)(x::FastRational{T, MayReduce}, y::Rational{T}) where {T<:SignedInt} =
-   cannonical(x) <= y
-
 Base.:(==)(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
    numer(x) === numer(y) && denom(x) === denom(y)
 Base.:(!=)(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
    numer(x) !== numer(y) || denom(x) !== denom(y)
-Base.:(<)(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   numer(x)*denom(y) < numer(y)*denom(x)
-Base.:(<=)(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   numer(x)*denom(y) <= numer(y)*denom(x)
-Base.:(>=)(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   numer(x)*denom(y) >= numer(y)*denom(x)
-Base.:(>)(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   numer(x)*denom(y) >= numer(y)*denom(x)
-Base.isequal(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
+
+for F in (:(>), :(>=), :(<=), :(<))
+    @eval $F(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
+   $F(numer(x)*denom(y), numer(y)*denom(x))
+end
+
+
+for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
+    @eval $F(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
+   $F(x, cannonical(y))
+end
+for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
+    @eval $F(x::FastRational{T, MayReduced}, y::FastRational{T, IsReduce}) where {T<:SignedInt} =
+   $F(cannonical(x), y)
+end
+for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
+    @eval $F(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
+   $F(cannonical(x), cannonical(y))
+end
+
+
+Base.isequal(x::FastRational{T, R1}, y::FastRational{T, R2}) where {T<:SignedInt, R1<:Reduceable, R2<:Reduceable} =
    x == y
-Base.isless(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
+Base.isless(x::FastRational{T, R1}, y::FastRational{T, R2}) where {T<:SignedInt, R1<:Reduceable, R2<:Reduceable} =
    x < y
-
-Base.:(==)(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   x == cannonical(y)   
-Base.:(!=)(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   x != cannonical(y)   
-Base.:(<)(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-      x < cannonical(y)   
-Base.:(<=)(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-      x <= cannonical(y)   
-Base.:(>=)(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-      x >= cannonical(y)   
-Base.:(>)(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-      x > cannonical(y)   
-Base.isequal(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   isequal(x, cannonical(y))
-Base.isless(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   isless(x, cannonical(y))
-
-Base.:(==)(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   cannonical(x) == y
-Base.:(!=)(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   cannonical(x) != y
-Base.:(<)(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   cannonical(x) < y
-Base.:(<=)(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   cannonical(x) <= y
-Base.:(>=)(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   cannonical(x) >= y
-Base.:(>)(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   cannonical(x) > y
-Base.isequal(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   cannonical(x) == y
-Base.isless(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   cannonical(x) < y
-
-Base.:(==)(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   cannonical(x) == cannonical(y)
-Base.:(!=)(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   cannonical(x) != cannonical(y)
-Base.:(<)(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   cannonical(x) < cannonical(y)
-Base.:(<=)(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   cannonical(x) <= cannonical(y)
-Base.:(>=)(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   cannonical(x) >= cannonical(y)
-Base.:(>)(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   cannonical(x) > cannonical(y)
-Base.isequal(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   cannonical(x) == cannonical(y)
-Base.isless(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   cannonical(x) < cannonical(y)
-
-
-Base.:(<)(x::FastRational{T, R1}, y::FastRational{T, R2}) where {T<:SignedInt, R1<:Reduceable, R2<:Reduceable} =
-   numer(x)*denom(y) < numer(y)*denom(x)
-Base.:(<=)(x::FastRational{T, R1}, y::FastRational{T, R2}) where {T<:SignedInt, R1<:Reduceable, R2<:Reduceable} =
-   numer(x)*denom(y) <= numer(y)*denom(x)
-Base.:(>=)(x::FastRational{T, R1}, y::FastRational{T, R2}) where {T<:SignedInt, R1<:Reduceable, R2<:Reduceable} =
-   numer(x)*denom(y) >= numer(y)*denom(x)
-Base.:(>)(x::FastRational{T, R1}, y::FastRational{T, R2}) where {T<:SignedInt, R1<:Reduceable, R2<:Reduceable} =
-   numer(x)*denom(y) > numer(y)*denom(x)
-
 
 end # module
