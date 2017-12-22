@@ -5,6 +5,12 @@ else
     using Base.Test
 end
 
+using BenchmarkTools
+
+macro fastest_time(this)
+   :((@benchmark $this).times[1])
+end
+
 # using Int32s
 
 numer_a, denom_a = Int32(5), Int32(77)
