@@ -6,7 +6,7 @@ export FastRational
 import Base: promote_rule, convert,
     show, read, write, convert, promote_rule, widen,
     checked_add, checked_sub, checked_mul, power_by_squaring,
-    numer, denom, rationalize, isinteger, iszero,
+    numerator, denominator, rationalize, isinteger, iszero,
     sign, signbit, copysign, flipsign, typemin, typemax,
     ==, <=, <, cmp, -, +, *, inv, /, //, rem, mod, fma, div, fld, cld,
     trunc, floor, ceil, round, ^
@@ -29,6 +29,8 @@ end
 
 @inline numer(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = q.num
 @inline denom(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = q.den
+@inline numerator(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = q.num
+@inline denominator(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = q.den
 
 FastRational(::Type{R}, num::T, den::T) where {T<:SignedInt, R<:Reduceable} = FastRational{T, R}(num, den)
 
