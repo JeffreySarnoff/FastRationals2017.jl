@@ -25,7 +25,7 @@ numer_a, denom_a = Int32(5), Int32(77)
 numer_b, denom_b = Int32(100), Int32(17)
 a = Rational(numer_a, denom_a); b = Rational(numer_b, denom_b);
 afast = FastRational(numer_a, denom_a); bfast = FastRational(numer_b, denom_b);
-                                                              # on two machines
+                                                             
 fld( (@fastest_time $a + $b), (@fastest_time $afast + $bfast) )  # I get 20x
 fld( (@fastest_time $a * $b), (@fastest_time $afast * $bfast) )  # I get 40x
 
