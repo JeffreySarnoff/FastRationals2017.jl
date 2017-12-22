@@ -36,7 +36,7 @@ numer_b, denom_b = Int64(100), Int64(17)
 a = Rational(numer_a, denom_a); b = Rational(numer_b, denom_b);
 afast = FastRational(numer_a, denom_a); bfast = FastRational(numer_b, denom_b);
 
-fld( (@fastest_time $a + $b), (@fastest_time $afast + $bfast) )  # I get 9x
+fld( (@fastest_time $a + $b), (@fastest_time $afast + $bfast) )  # I get 8x
 fld( (@fastest_time $a * $b), (@fastest_time $afast * $bfast) )  # I get 10x
 
 # using Int128s
@@ -48,6 +48,16 @@ afast = FastRational(numer_a, denom_a); bfast = FastRational(numer_b, denom_b);
 
 fld( (@fastest_time $a + $b), (@fastest_time $afast + $bfast) )  # I get 1x
 fld( (@fastest_time $a * $b), (@fastest_time $afast * $bfast) )  # I get 2x
+
+# using BigInt
+
+numer_a, denom_a = BigInt(5), BigInt(77)
+numer_b, denom_b = BigInt(100), BigInt(17)
+a = Rational(numer_a, denom_a); b = Rational(numer_b, denom_b);
+afast = FastRational(numer_a, denom_a); bfast = FastRational(numer_b, denom_b);
+
+fld( (@fastest_time $a + $b), (@fastest_time $afast + $bfast) )  # I get 2x
+fld( (@fastest_time $a * $b), (@fastest_time $afast * $bfast) )  # I get 5x
 
 
 ```
