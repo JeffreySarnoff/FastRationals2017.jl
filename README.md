@@ -15,27 +15,39 @@ Pkg.clone(...)
 using FastRationals
 using BenchmarkTools
 
-macro fastest(this)
+macro fastest_time(this)
    :((@benchmark $this).times[1])
 end
 
-a_numer, a_denom = Int64(5), Int64(77)
-b_numer, b_denom = Int64(100), Int64(17)
+# using Int32s
 
-a_q = Rational(a_numer, a_denom);         b_q = Rational(b_numer, b_denom);
-a_fastq = FastRational(a_numer, a_denom); b_fastq = FastRational(b_numer, b_denom);
-
-fld( (@fastest $a_q + $b_q), (@fastest $a_fastq + $b_fastq) )  # I get 6.0
-fld( (@fastest $a_q * $b_q), (@fastest $a_fastq * $b_fastq) )  # I get 7.0
-
-a_numer, a_denom = Int32(5), Int32(77)
-b_numer, b_denom = Int32(100), Int32(17)
-
-a_q = Rational(a_numer, a_denom);         b_q = Rational(b_numer, b_denom);
-a_fastq = FastRational(a_numer, a_denom); b_fastq = FastRational(b_numer, b_denom);
+numer_a, denom_a = Int32(5), Int32(77)
+numer_b, denom_b = Int32(100), Int32(17)
+a = Rational(numer_a, denom_a); b = Rational(numer_b, denom_b);
+afast = FastRational(numer_a, denom_a); bfast = FastRational(numer_b, denom_b);
                                                               # on two machines
-fld( (@fastest $a_q + $b_q), (@fastest $a_fastq + $b_fastq) ) # I get  9.0, 13.0
-fld( (@fastest $a_q * $b_q), (@fastest $a_fastq * $b_fastq) ) # I get 15.0, 25.0
+fld( (@fastest_time $a + $b), (@fastest_time $afast + $bfast) )  # I get 20x
+fld( (@fastest_time $a * $b), (@fastest_time $afast * $bfast) )  # I get 40x
+
+# using Int64s
+
+numer_a, denom_a = Int64(5), Int64(77)
+numer_b, denom_b = Int64(100), Int64(17)
+a = Rational(numer_a, denom_a); b = Rational(numer_b, denom_b);
+afast = FastRational(numer_a, denom_a); bfast = FastRational(numer_b, denom_b);
+
+fld( (@fastest_time $a + $b), (@fastest_time $afast + $bfast) )  # I get 9x
+fld( (@fastest_time $a * $b), (@fastest_time $afast * $bfast) )  # I get 10x
+
+# using Int128s
+
+numer_a, denom_a = Int128(5), Int128(77)
+numer_b, denom_b = Int128(100), Int128(17)
+a = Rational(numer_a, denom_a); b = Rational(numer_b, denom_b);
+afast = FastRational(numer_a, denom_a); bfast = FastRational(numer_b, denom_b);
+
+fld( (@fastest_time $a + $b), (@fastest_time $afast + $bfast) )  # I get 1x
+fld( (@fastest_time $a * $b), (@fastest_time $afast * $bfast) )  # I get 2x
 
 
 ```
