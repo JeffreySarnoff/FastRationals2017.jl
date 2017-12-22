@@ -3,7 +3,8 @@ module FastRationals
 export FastRational
 
 
-import Base: show, read, write, convert, promote_rule, widen,
+import Base: promote_rule, convert,
+    show, read, write, convert, promote_rule, widen,
     checked_add, checked_sub, checked_mul, power_by_squaring,
     numer, denom, rationalize, isinteger, iszero,
     sign, signbit, copysign, flipsign, typemin, typemax,
@@ -293,5 +294,25 @@ function write(s::IO, x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable}
     return write(s, numer(z), denom(z))
 end
 
+promote_rule(::Type{FastRational{T, R}}, ::Type{Rational{T}}) where {T<:SignedInt, R<:Reduceable} =
+    FastRational{T, R}
+
+Base.promote_type(::Type{FastRational{T, R}}, ::Type{Rational{S}}) where {T<:SignedInt, R<:Reduceable, S<:SignedInt} =
+    sizeof(T) >= sizeof(S) ? FastRational{T, R} : FastRational{S, R}
+
+convert(::Type{FastRational{T, R}}, x::Rational{T}) where {T<:SignedInt, R<:Reduceable} =
+    FastRational(R, numerator(x), denominator(x))
+
+convert(::Type{Rational{T}}, x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable, S<:SignedInt} =
+    Rational(numer(x), denom(x))
+
+convert(::Type{Rational{S}}, x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} =
+    Rational(S(numer(x)), S(denominator(x)))
+
+FastRational(x::Rational{T}) where {T<:SignedInt, R<:Reduceable} =
+    convert(FastRational{T, R}, x)
+
+Rational(x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} =
+    convert(Rational{T}, x)
 
 end # module
