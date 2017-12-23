@@ -360,7 +360,7 @@ for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
    $F(x, canonical(y))
 end
 for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
-    @eval $F(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduce}) where {T<:SignedInt} =
+    @eval $F(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
    $F(canonical(x), y)
 end
 for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
