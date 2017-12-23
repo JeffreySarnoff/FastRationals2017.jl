@@ -8,7 +8,7 @@ import Base: promote_rule, convert,
     checked_add, checked_sub, checked_mul, power_by_squaring,
     numerator, denominator, rationalize, isinteger, iszero,
     sign, signbit, copysign, flipsign, typemin, typemax,
-    ==, <=, <, cmp, -, +, *, inv, /, //, rem, mod, fma, div, fld, cld,
+    ==, !=, <=, <, >=, >, cmp, -, +, *, inv, /, //, rem, mod, fma, div, fld, cld,
     trunc, floor, ceil, round, ^
 
 import Base.Checked: add_with_overflow, sub_with_overflow, mul_with_overflow
