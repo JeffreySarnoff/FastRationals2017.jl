@@ -22,7 +22,7 @@ const Reduceable = Union{IsReduced, MayReduce}
 # T is a primitive Signed type
 # R is the IsReduced or MayReduce parameter
 
-struct FastRational{T, R} <: Real
+mutable struct FastRational{T, R} <: Real
     num::T
     den::T
 end
