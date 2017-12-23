@@ -22,15 +22,27 @@ const Reduceable = Union{IsReduced, MayReduce}
 # T is a primitive Signed type
 # R is the IsReduced or MayReduce parameter
 
-mutable struct FastRational{T, R} <: Real
+# FastRationals are all of the sort IsReduced
+struct FastRational{T} <: Real
     num::T
     den::T
 end
 
-@inline numer(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = q.num
-@inline denom(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = q.den
-@inline numerator(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = q.num
-@inline denominator(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = q.den
+# FastRatios are all of the sort MayReduce
+mutable struct FastRatio{T} <: Real
+    num::T
+    den::T
+end
+
+@inline numer(q::FastRational{T}) where {T<:SignedInt} = q.num
+@inline denom(q::FastRational{T}) where {T<:SignedInt} = q.den
+@inline numerator(q::FastRational{T}) where {T<:SignedInt} = q.num
+@inline denominator(q::FastRational{T}) where {T<:SignedInt} = q.den
+
+@inline numer(q::FastRatio{T}) where {T<:SignedInt} = q.num
+@inline denom(q::FastRatio{T}) where {T<:SignedInt} = q.den
+@inline numerator(q::FastRatio{T}) where {T<:SignedInt} = q.num
+@inline denominator(q::FastRatio{T}) where {T<:SignedInt} = q.den
 
 FastRational(::Type{R}, num::T, den::T) where {T<:SignedInt, R<:Reduceable} = FastRational{T, R}(num, den)
 
