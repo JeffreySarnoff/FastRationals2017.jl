@@ -48,7 +48,7 @@ FastRational(::Type{R}, num::T, den::T) where {T<:SignedInt, R<:Reduceable} = Fa
 
 
 # FastRationals are created with denom == abs(denom)
-function cannonical(num::T, den::T) where {T<:SignedInt}
+function canonical(num::T, den::T) where {T<:SignedInt}
     num = flipsign(num, den)
     den = abs(den)
     gcdivisor = gcd(den, num)
@@ -59,7 +59,7 @@ function cannonical(num::T, den::T) where {T<:SignedInt}
 end
 
 # FastRationals are created with denom == abs(denom)
-function cannonical(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable}
+function canonical(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable}
     den = denom(q)
     num = numer(q)
     gcdivisor = gcd(den, num)
@@ -119,8 +119,8 @@ function Base.:(+)(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce})
 
     !ovf && return FastRational{T, MayReduce}(num, den)
 
-    x = cannonical(x)
-    y = cannonical(y)
+    x = canonical(x)
+    y = canonical(y)
 
     num_a, ovfl = mul_with_overflow(numer(x), denom(y))
     ovf |= ovfl
@@ -149,8 +149,8 @@ function Base.:(+)(x::FastRational{T, R}, y::FastRational{T, R}) where {T<:Signe
 
     !ovf && return FastRational{T, MayReduce}(num, den)
 
-    x = isreduced(x) ? x : cannonical(x)
-    y = isreduced(y) ? y : cannonical(y)
+    x = isreduced(x) ? x : canonical(x)
+    y = isreduced(y) ? y : canonical(y)
 
     num_a, ovfl = mul_with_overflow(numer(x), denom(y))
     ovf |= ovfl
@@ -179,7 +179,7 @@ function Base.:(+)(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce})
 
     !ovf && return FastRational{T, MayReduce}(num, den)
 
-    y = cannonical(y)
+    y = canonical(y)
 
     num_a, ovfl = mul_with_overflow(numer(x), denom(y))
     ovf |= ovfl
@@ -210,8 +210,8 @@ function Base.:(-)(x::FastRational{T, R}, y::FastRational{T, R}) where {T<:Signe
 
     !ovf && return FastRational{T, MayReduce}(num, den)
 
-    x = isreduced(x) ? x : cannonical(x)
-    y = isreduced(y) ? y : cannonical(y)
+    x = isreduced(x) ? x : canonical(x)
+    y = isreduced(y) ? y : canonical(y)
 
     num_a, ovfl = mul_with_overflow(numer(x), denom(y))
     ovf |= ovfl
@@ -236,8 +236,8 @@ function Base.:(*)(x::FastRational{T, R}, y::FastRational{T, R}) where {T<:Signe
     ovf |= ovfl
 
     if ovf
-       x = isreduced(x) ? x : cannonical(x)
-       y = isreduced(y) ? y : cannonical(y)
+       x = isreduced(x) ? x : canonical(x)
+       y = isreduced(y) ? y : canonical(y)
 
        ovf = false
        num, ovfl = mul_with_overflow(numer(x), numer(y))
@@ -260,10 +260,10 @@ function Base.:(//)(x::FastRational{T, R}, y::FastRational{T, R}) where {T<:Sign
     ovf |= ovfl
 
     if ovf
-       #x = ifelse(isreduced(x), x, cannonical(x))
-       #y = ifelse(isreduced(y), y, cannonical(y))
-       x = isreduced(x) ? x : cannonical(x)
-       y = isreduced(y) ? y : cannonical(y)
+       #x = ifelse(isreduced(x), x, canonical(x))
+       #y = ifelse(isreduced(y), y, canonical(y))
+       x = isreduced(x) ? x : canonical(x)
+       y = isreduced(y) ? y : canonical(y)
 
        ovf = false
        num, ovfl = mul_with_overflow(numer(x), denom(y))
@@ -281,18 +281,18 @@ Base.:(/)(x::FastRational{T, R}, y::FastRational{T, R}) where {T<:SignedInt, R<:
 
 
 function show(io::IO, x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable}
-    z = isreduced(x) ? x : cannonical(x)
+    z = isreduced(x) ? x : canonical(x)
     print(io, numer(z), "//", denom(z))
 end
 
 function read(s::IO, ::Type{FastRational{T, R}}) where {T<:SignedInt, R<:Reduceable}
     r = read(s,T)
     i = read(s,T)
-    return cannonical(r,i)
+    return canonical(r,i)
 end
 
 function write(s::IO, x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable}
-    z = isreduced(x) ? x : cannonical(x)
+    z = isreduced(x) ? x : canonical(x)
     return write(s, numer(z), denom(z))
 end
 
@@ -327,13 +327,13 @@ Base.:(!=)(x::FastRational{T, IsReduced}, y::Rational{T}) where {T<:SignedInt} =
    !(x == y)
 
 Base.:(==)(x::Rational{T}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   x == cannonical(y)
+   x == canonical(y)
 Base.:(!=)(x::Rational{T}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   x != cannonical(y)
+   x != canonical(y)
 Base.:(==)(x::FastRational{T, MayReduce}, y::Rational{T}) where {T<:SignedInt} =
-   cannonial(x) == y
+   canonial(x) == y
 Base.:(!=)(x::FastRational{T, MayReduce}, y::Rational{T}) where {T<:SignedInt} =
-   cannonical(x) != y
+   canonical(x) != y
 
 Base.:(<)(x::Rational{T}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
     x < Rational{T}(y)
@@ -357,15 +357,15 @@ end
 
 for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
     @eval $F(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   $F(x, cannonical(y))
+   $F(x, canonical(y))
 end
 for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
     @eval $F(x::FastRational{T, MayReduced}, y::FastRational{T, IsReduce}) where {T<:SignedInt} =
-   $F(cannonical(x), y)
+   $F(canonical(x), y)
 end
 for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
     @eval $F(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   $F(cannonical(x), cannonical(y))
+   $F(canonical(x), canonical(y))
 end
 
 
