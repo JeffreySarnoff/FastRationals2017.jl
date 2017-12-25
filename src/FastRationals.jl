@@ -97,14 +97,20 @@ promote_rule(::Type{R}, x::Rational{T}}) where {T<:Signed, R<:Union{FastRational
 promote_rule(::Type{FastRational{T}}, ::Type{PlainRational{T}}) where T<:Signed =
     FastRational{T}
 
-const NTPlainRational = NamedTuple{(:num, :den)}
-const NTFastRational  = NamedTuple{(:num, :den)}
-NT_PlainRational(num::T, den::T) where T = NTPlainRational((num, den))
-NT_FastRational(num::T, den::T) where T = NTFastRational((num, den))
-NT_PlainRational(numden::Tuple{T,T}) where T = NTPlainRational(numden)
-NT_FastRational(numden::Tuple{T,T}) where T = NTFastRational(numden)
-NT_FastRational(nt::NTPlainRational) = NT_FastRational(canonical(nt.num, nt.den)))
+const PlainRationalNT = NamedTuple{(:num, :den)}
+const FastRationalNT  = NamedTuple{(:num, :den)}
+@inline NT_PlainRational(num::T, den::T) where T = PlainRationalNT((num, den))
+@inline NT_FastRational(num::T, den::T) where T = FastRationalNT((num, den))
+@inline NT_PlainRational(numden::Tuple{T,T}) where T = PlainRationalNT(numden)
+@inline NT_FastRational(numden::Tuple{T,T}) where T = FastRationalNT(numden)
+@inline NT_FastRational(nt::PlainRationalNT) = NT_FastRational(canonical(nt.num, nt.den)))
 
+@inline Base.convert(::Type{PlainRationalNT}, x::PlainRational{T}) where T =
+    NT_PlainRational(numerator(x), denominator(x))
+@inline Base.convert(::Type{FastRationalNT}, x::FastRational{T}) where T =
+    NT_FastRational(numerator(x), denominator(x))
+@inline Base.convert(::Type{FastRationalNT}, x::PlainRational{T}) where T =
+    NT_FastRational(canonical(numerator(x), denominator(x)))
 
 
         
