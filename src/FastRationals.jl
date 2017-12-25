@@ -32,7 +32,7 @@ end
 @inline numerator(x::PlainRational{T}) where T = x.num
 @inline denominator(x::PlainRational{T}) where T = x.den
 @inline value(x::PlainRational{T}) where T = (x.num, x.den)
-eltype(x::PlainRational{T}) = T
+eltype(x::PlainRational{T}) where T = T
 
 struct FastRational{T} <: ReducedRational{T}
     num::T
@@ -151,7 +151,7 @@ end
 convert(::Type{PlainRational{T}}, x::T) where {T<:Signed} =
     FastRational(x, one(T))
         
-convert(::Type{Rational{T}, x::R) where {T<:Signed, R<:Union{FastRational{T}, PlainRational{T}}} =
+convert(::Type{Rational{T}}, x::R) where {T<:Signed, R<:Union{FastRational{T}, PlainRational{T}}} =
     Rational(numerator(x), denominator(x))
 convert(::Type{T}, x::FastRational{T}) where {T} =
     denominator(x) === one(T) ? numerator(x) : throw(InexactError())
@@ -160,7 +160,7 @@ convert(::Type{T}, x::PlainRational{T}) where {T} =
 
 promote_rule(::Type{R}, ::Type{T}) where {T, R<:Union{FastRational{T}, PlainRational{T}}} =
     R
-promote_rule(::Type{R}, x::Rational{T}}) where {T<:Signed, R<:Union{FastRational{T}, PlainRational{T}}} =
+promote_rule(::Type{R}, x::Rational{T}) where {T<:Signed, R<:Union{FastRational{T}, PlainRational{T}}} =
     R
 promote_rule(::Type{FastRational{T}}, ::Type{PlainRational{T}}) where T<:Signed =
     FastRational{T}
@@ -171,7 +171,7 @@ const FastRationalNT  = NamedTuple{(:num, :den)}
 @inline NT_FastRational(num::T, den::T) where T = FastRationalNT((num, den))
 @inline NT_PlainRational(numden::Tuple{T,T}) where T = PlainRationalNT(numden)
 @inline NT_FastRational(numden::Tuple{T,T}) where T = FastRationalNT(numden)
-@inline NT_FastRational(nt::PlainRationalNT) = NT_FastRational(canonical(nt.num, nt.den)))
+@inline NT_FastRational(nt::PlainRationalNT) = NT_FastRational(canonical(nt.num, nt.den))
 
 @inline Base.convert(::Type{PlainRationalNT}, x::PlainRational{T}) where T =
     NT_PlainRational(numerator(x), denominator(x))
@@ -180,7 +180,9 @@ const FastRationalNT  = NamedTuple{(:num, :den)}
 @inline Base.convert(::Type{FastRationalNT}, x::PlainRational{T}) where T =
     NT_FastRational(canonical(numerator(x), denominator(x)))
 
-r(q))...,)
+                
+                
+                
 
 @inline function convert(::Type{FastRational{T}}, x::PlainRational{T}) where T<:Union{Int128, Int64, Int32, Int16, Int8}
     return canonical(x)
