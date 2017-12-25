@@ -144,7 +144,7 @@ end
     return canonical(x)
 end
         
-function convert(::Type{PlainRational{T]}, x::FastRational{T}) where T
+function convert(::Type{PlainRational{T}}, x::FastRational{T}) where T
     throw(ErrorException("disallowed: convert(PlainRational, x::FastRational)"))
 end
 # !!! Target != typeof(convert(::Type{Target}, x::Source)) !!!
