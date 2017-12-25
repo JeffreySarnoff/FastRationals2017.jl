@@ -140,7 +140,7 @@ end
 @inline canonical(q::PlainRational{T}) where {T} =
     FastRational(canonical(numerator(a), denominator(q))...,)
 
-@inline function convert(::Type{FastRational{T}}, x::PlainRational{T}) where T<:{Int128, Int64, Int32, Int16, Int8}
+@inline function convert(::Type{FastRational{T}}, x::PlainRational{T}) where T<:Union{Int128, Int64, Int32, Int16, Int8}
     return canonical(x)
 end
         
