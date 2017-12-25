@@ -3,10 +3,11 @@ module FastRationals
 export FastRational
 
 
-import Base: promote_rule, convert,
-    show, read, write, convert, promote_rule, widen,
+import Base: convert, promote_rule, eltype,
+    show, read, write,
     checked_add, checked_sub, checked_mul, power_by_squaring,
-    numerator, denominator, rationalize, isinteger, iszero,
+    numerator, denominator, widen, rationalize, 
+    isinteger, iszero, isone,
     sign, signbit, copysign, flipsign, typemin, typemax,
     ==, !=, <=, <, >=, >, cmp, -, +, *, inv, /, //, rem, mod, fma, div, fld, cld,
     trunc, floor, ceil, round, ^
@@ -18,6 +19,79 @@ const SignedInt  = Union{Int64, Int32, Int16, Int128, BigInt, Int8}
 const IsReduced  = Val{:IsReduced}
 const MayReduce  = Val{:MayReduce}
 const Reduceable = Union{IsReduced, MayReduce}
+
+abstract type AbstractRational{T} <: Real end
+abstract type GenericRational{T}  <: AbstractRational{T} end
+abstract type ReducedRational{T}  <: GenericRational{T}  end
+
+struct FastRational{T} <: GenericRational{T}
+    num::T
+    den::T
+end
+
+@inline numerator(x::FastRational{T}) where T = x.num
+@inline denominator(x::FastRational{T}) where T = x.den
+@inline value(x::FastRational{T}) where T = (x.num, x.den)
+eltype(x::FastRational{T}) = T
+
+struct FasterRational{T} <: ReducedRational{T}
+    num::T
+    den::T
+end
+
+@inline numerator(x::FasterRational{T}) where T = x.num
+@inline denominator(x::FasterRational{T}) where T = x.den
+@inline value(x::FasterRational{T}) where T = (x.num, x.den)
+eltype(x::FasterRational{T}) where T = T
+
+function convert(::Type{FasterRational{T]}, x::FastRational{T}) where T
+    num, den = value(x)
+    gcdenom = gcd(num, den)
+    if gcdenom !== one(T)
+        num = div(num, gcdenom)
+        den = div(den, gcdenom)
+    end
+    return FasterRational(num, den)
+end
+
+function convert(::Type{FasterRational{T}}, x::FastRational{T}) where T<:{Int128, Int64, Int32, Int16, Int8}
+    num, den = value(x)
+    no_trailingzeros = num >> trailing_zeros(num)
+    if den >> trailing_zeros(den) !== no_trailingzeros
+        gcdenom = gcd(num, den)
+        num = div(num, gcdenom)
+        den = div(den, gcdenom)
+    else
+        num = no_trailingzeros
+        den = one(T)
+    end
+    return FasterRational(num, den)
+end
+
+function convert(::Type{FastRational{T]}, x::FasterRational{T}) where T
+    throw(ErrorException("disallowed: convert(FastRational, x::FasterRational)"))
+end
+# !!! Target != typeof(convert(::Type{Target}, x::Source)) !!!
+convert(::Type{FastRational{T}}, x::T) where {T<:Signed} =
+    FasterRational(x, one(T))
+        
+convert(::Type{Rational{T}, x::R) where {T<:Signed, R<:Union{FasterRational{T}, FastRational{T}}} =
+    Rational(numerator(x), denominator(x))
+convert(::Type{T}, x::FasterRational{T}) where {T} =
+    denominator(x) === one(T) ? numerator(x) : throw(InexactError())
+convert(::Type{T}, x::FastRational{T}) where {T} =
+    convert(T, convert(FasterRational{T}, x))
+
+promote_rule(::Type{R}, ::Type{T}) where {T, R<:Union{FasterRational{T}, FastRational{T}}} =
+    R
+promote_rule(::Type{R}, x::Rational{T}}) where {T<:Signed, R<:Union{FasterRational{T}, FastRational{T}}} =
+    R
+promote_rule(::Type{FasterRational{T}}, ::Type{FastRational{T}}) where T<:Signed =
+    FasterRational{T}
+
+
+
+
 
 # T is a primitive Signed type
 # R is the IsReduced or MayReduce parameter
