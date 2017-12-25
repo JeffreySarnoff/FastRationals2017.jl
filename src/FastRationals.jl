@@ -57,7 +57,7 @@ function canonical(num::T, den::T) where {T<:SignedInt}
         num = no_trailingzeros
         den = one(T)
     end
-    return FastRational(num, den)
+    return num, den
 end
 
 function canonical(num::T, den::T) where {T}
@@ -66,11 +66,11 @@ function canonical(num::T, den::T) where {T}
         num = div(num, gcdenom)
         den = div(den, gcdenom)
     end
-    return FastRational(num, den)
+    return num, den
 end
 
 @inline canonical(q::PlainRational{T}) where {T} =
-    canonical(numerator(a), denominator(q))
+    FastRational(canonical(numerator(a), denominator(q))...,)
 
 @inline function convert(::Type{FastRational{T}}, x::PlainRational{T}) where T<:{Int128, Int64, Int32, Int16, Int8}
     return canonical(x)
@@ -96,6 +96,14 @@ promote_rule(::Type{R}, x::Rational{T}}) where {T<:Signed, R<:Union{FastRational
     R
 promote_rule(::Type{FastRational{T}}, ::Type{PlainRational{T}}) where T<:Signed =
     FastRational{T}
+
+const NTPlainRational = NamedTuple{(:num, :den)}
+const NTFastRational  = NamedTuple{(:num, :den)}
+NT_PlainRational(num::T, den::T) where T = NTPlainRational((num, den))
+NT_FastRational(num::T, den::T) where T = NTFastRational((num, den))
+NT_PlainRational(numden::Tuple{T,T}) where T = NTPlainRational(numden)
+NT_FastRational(numden::Tuple{T,T}) where T = NTFastRational(numden)
+NT_FastRational(nt::NTPlainRational) = NT_FastRational(canonical(nt.num, nt.den)))
 
 
 
