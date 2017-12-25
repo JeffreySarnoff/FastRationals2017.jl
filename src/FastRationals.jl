@@ -70,9 +70,119 @@ function canonical(num::T, den::T) where {T}
 end
 
 @inline canonical(q::PlainRational{T}) where {T} =
+    FastRational(canonical(numerator(a), denominato
+import Base: convert, promote_rule, eltype,
+    show, read, write,
+    checked_add, checked_sub, checked_mul, power_by_squaring,
+    numerator, denominator, widen, rationalize, 
+    isinteger, iszero, isone,
+    sign, signbit, copysign, flipsign, typemin, typemax,
+    ==, !=, <=, <, >=, >, cmp, -, +, *, inv, /, //, rem, mod, fma, div, fld, cld,
+    trunc, floor, ceil, round, ^
+
+import Base.Checked: add_with_overflow, sub_with_overflow, mul_with_overflow
+
+const SignedInt  = Union{Int64, Int32, Int16, Int128, BigInt, Int8}
+
+const IsReduced  = Val{:IsReduced}
+const MayReduce  = Val{:MayReduce}
+const Reduceable = Union{IsReduced, MayReduce}
+
+abstract type AbstractRational{T} <: Real end
+abstract type GenericRational{T}  <: AbstractRational{T} end
+abstract type ReducedRational{T}  <: GenericRational{T}  end
+
+struct PlainRational{T} <: GenericRational{T}
+    num::T
+    den::T
+end
+
+@inline numerator(x::PlainRational{T}) where T = x.num
+@inline denominator(x::PlainRational{T}) where T = x.den
+@inline value(x::PlainRational{T}) where T = (x.num, x.den)
+eltype(x::PlainRational{T}) where T = T
+
+struct FastRational{T} <: ReducedRational{T}
+    num::T
+    den::T
+end
+
+@inline numerator(x::FastRational{T}) where T = x.num
+@inline denominator(x::FastRational{T}) where T = x.den
+@inline value(x::FastRational{T}) where T = (x.num, x.den)
+eltype(x::FastRational{T}) where T = T
+
+# FastRationals are created with denom == abs(denom)
+function canonical(num::T, den::T) where {T<:SignedInt}
+    num = flipsign(num, den)
+    den = abs(den)
+    no_trailingzeros = num >> trailing_zeros(num)
+    if den >> trailing_zeros(den) !== no_trailingzeros
+        gcdenom = gcd(num, den)
+        num = div(num, gcdenom)
+        den = div(den, gcdenom)
+    else
+        num = no_trailingzeros
+        den = one(T)
+    end
+    return num, den
+end
+
+function canonical(num::T, den::T) where {T}
+    gcdenom = gcd(num, den)
+    if gcdenom !== one(T)
+        num = div(num, gcdenom)
+        den = div(den, gcdenom)
+    end
+    return num, den
+end
+
+@inline canonical(q::PlainRational{T}) where {T} =
     FastRational(canonical(numerator(a), denominator(q))...,)
 
 @inline function convert(::Type{FastRational{T}}, x::PlainRational{T}) where T<:{Int128, Int64, Int32, Int16, Int8}
+    return canonical(x)
+end
+        
+function convert(::Type{PlainRational{T]}, x::FastRational{T}) where T
+    throw(ErrorException("disallowed: convert(PlainRational, x::FastRational)"))
+end
+# !!! Target != typeof(convert(::Type{Target}, x::Source)) !!!
+convert(::Type{PlainRational{T}}, x::T) where {T<:Signed} =
+    FastRational(x, one(T))
+        
+convert(::Type{Rational{T}, x::R) where {T<:Signed, R<:Union{FastRational{T}, PlainRational{T}}} =
+    Rational(numerator(x), denominator(x))
+convert(::Type{T}, x::FastRational{T}) where {T} =
+    denominator(x) === one(T) ? numerator(x) : throw(InexactError())
+convert(::Type{T}, x::PlainRational{T}) where {T} =
+    convert(T, convert(FastRational{T}, x))
+
+promote_rule(::Type{R}, ::Type{T}) where {T, R<:Union{FastRational{T}, PlainRational{T}}} =
+    R
+promote_rule(::Type{R}, x::Rational{T}}) where {T<:Signed, R<:Union{FastRational{T}, PlainRational{T}}} =
+    R
+promote_rule(::Type{FastRational{T}}, ::Type{PlainRational{T}}) where T<:Signed =
+    FastRational{T}
+
+const PlainRationalNT = NamedTuple{(:num, :den)}
+const FastRationalNT  = NamedTuple{(:num, :den)}
+@inline NT_PlainRational(num::T, den::T) where T = PlainRationalNT((num, den))
+@inline NT_FastRational(num::T, den::T) where T = FastRationalNT((num, den))
+@inline NT_PlainRational(numden::Tuple{T,T}) where T = PlainRationalNT(numden)
+@inline NT_FastRational(numden::Tuple{T,T}) where T = FastRationalNT(numden)
+@inline NT_FastRational(nt::PlainRationalNT) = NT_FastRational(canonical(nt.num, nt.den)))
+
+@inline Base.convert(::Type{PlainRationalNT}, x::PlainRational{T}) where T =
+    NT_PlainRational(numerator(x), denominator(x))
+@inline Base.convert(::Type{FastRationalNT}, x::FastRational{T}) where T =
+    NT_FastRational(numerator(x), denominator(x))
+@inline Base.convert(::Type{FastRationalNT}, x::PlainRational{T}) where T =
+    NT_FastRational(canonical(numerator(x), denominator(x)))
+
+r(q))...,)
+
+@inline function convert(::Type{FastRational{T}}, x::PlainRational{T}) where T<:Union{Int128, Int64, Int32, Int16, Int8}
     return canonical(x)
 end
         
