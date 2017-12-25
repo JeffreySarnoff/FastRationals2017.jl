@@ -24,7 +24,17 @@ abstract type AbstractRational{T} <: Real end
 abstract type GenericRational{T}  <: AbstractRational{T} end
 abstract type ReducedRational{T}  <: GenericRational{T}  end
 
-struct FastRational{T} <: GenericRational{T}
+struct PlainRational{T} <: GenericRational{T}
+    num::T
+    den::T
+end
+
+@inline numerator(x::PlainRational{T}) where T = x.num
+@inline denominator(x::PlainRational{T}) where T = x.den
+@inline value(x::PlainRational{T}) where T = (x.num, x.den)
+eltype(x::PlainRational{T}) = T
+
+struct FastRational{T} <: ReducedRational{T}
     num::T
     den::T
 end
@@ -32,30 +42,12 @@ end
 @inline numerator(x::FastRational{T}) where T = x.num
 @inline denominator(x::FastRational{T}) where T = x.den
 @inline value(x::FastRational{T}) where T = (x.num, x.den)
-eltype(x::FastRational{T}) = T
+eltype(x::FastRational{T}) where T = T
 
-struct FasterRational{T} <: ReducedRational{T}
-    num::T
-    den::T
-end
-
-@inline numerator(x::FasterRational{T}) where T = x.num
-@inline denominator(x::FasterRational{T}) where T = x.den
-@inline value(x::FasterRational{T}) where T = (x.num, x.den)
-eltype(x::FasterRational{T}) where T = T
-
-function convert(::Type{FasterRational{T]}, x::FastRational{T}) where T
-    num, den = value(x)
-    gcdenom = gcd(num, den)
-    if gcdenom !== one(T)
-        num = div(num, gcdenom)
-        den = div(den, gcdenom)
-    end
-    return FasterRational(num, den)
-end
-
-function convert(::Type{FasterRational{T}}, x::FastRational{T}) where T<:{Int128, Int64, Int32, Int16, Int8}
-    num, den = value(x)
+# FastRationals are created with denom == abs(denom)
+function canonical(num::T, den::T) where {T<:SignedInt}
+    num = flipsign(num, den)
+    den = abs(den)
     no_trailingzeros = num >> trailing_zeros(num)
     if den >> trailing_zeros(den) !== no_trailingzeros
         gcdenom = gcd(num, den)
@@ -65,86 +57,49 @@ function convert(::Type{FasterRational{T}}, x::FastRational{T}) where T<:{Int128
         num = no_trailingzeros
         den = one(T)
     end
-    return FasterRational(num, den)
+    return FastRational(num, den)
 end
 
-function convert(::Type{FastRational{T]}, x::FasterRational{T}) where T
-    throw(ErrorException("disallowed: convert(FastRational, x::FasterRational)"))
+function canonical(num::T, den::T) where {T}
+    gcdenom = gcd(num, den)
+    if gcdenom !== one(T)
+        num = div(num, gcdenom)
+        den = div(den, gcdenom)
+    end
+    return FastRational(num, den)
+end
+
+@inline canonical(q::PlainRational{T}) where {T} =
+    canonical(numerator(a), denominator(q))
+
+@inline function convert(::Type{FastRational{T}}, x::PlainRational{T}) where T<:{Int128, Int64, Int32, Int16, Int8}
+    return canonical(x)
+end
+        
+function convert(::Type{PlainRational{T]}, x::FastRational{T}) where T
+    throw(ErrorException("disallowed: convert(PlainRational, x::FastRational)"))
 end
 # !!! Target != typeof(convert(::Type{Target}, x::Source)) !!!
-convert(::Type{FastRational{T}}, x::T) where {T<:Signed} =
-    FasterRational(x, one(T))
+convert(::Type{PlainRational{T}}, x::T) where {T<:Signed} =
+    FastRational(x, one(T))
         
-convert(::Type{Rational{T}, x::R) where {T<:Signed, R<:Union{FasterRational{T}, FastRational{T}}} =
+convert(::Type{Rational{T}, x::R) where {T<:Signed, R<:Union{FastRational{T}, PlainRational{T}}} =
     Rational(numerator(x), denominator(x))
-convert(::Type{T}, x::FasterRational{T}) where {T} =
-    denominator(x) === one(T) ? numerator(x) : throw(InexactError())
 convert(::Type{T}, x::FastRational{T}) where {T} =
-    convert(T, convert(FasterRational{T}, x))
+    denominator(x) === one(T) ? numerator(x) : throw(InexactError())
+convert(::Type{T}, x::PlainRational{T}) where {T} =
+    convert(T, convert(FastRational{T}, x))
 
-promote_rule(::Type{R}, ::Type{T}) where {T, R<:Union{FasterRational{T}, FastRational{T}}} =
+promote_rule(::Type{R}, ::Type{T}) where {T, R<:Union{FastRational{T}, PlainRational{T}}} =
     R
-promote_rule(::Type{R}, x::Rational{T}}) where {T<:Signed, R<:Union{FasterRational{T}, FastRational{T}}} =
+promote_rule(::Type{R}, x::Rational{T}}) where {T<:Signed, R<:Union{FastRational{T}, PlainRational{T}}} =
     R
-promote_rule(::Type{FasterRational{T}}, ::Type{FastRational{T}}) where T<:Signed =
-    FasterRational{T}
+promote_rule(::Type{FastRational{T}}, ::Type{PlainRational{T}}) where T<:Signed =
+    FastRational{T}
 
 
 
-
-
-# T is a primitive Signed type
-# R is the IsReduced or MayReduce parameter
-
-struct FastRational{T, R} <: Real
-    num::T
-    den::T
-end
-
-@inline numer(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = q.num
-@inline denom(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = q.den
-@inline numerator(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = q.num
-@inline denominator(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = q.den
-
-FastRational(::Type{R}, num::T, den::T) where {T<:SignedInt, R<:Reduceable} = FastRational{T, R}(num, den)
-
-@inline isreduced(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = R === IsReduced
-@inline mayreduce(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = R === MayReduce
-
-@inline FastRational(numer::T) where {T<:SignedInt} = FastRational{T, MayReduce}(numer, one(T))
-@inline FastRational(::Type{MayReduce}, numer::T) where {T<:SignedInt} = FastRational{T, MayReduce}(numer, one(T))
-@inline FastRational(::Type{IsReduced}, numer::T) where {T<:SignedInt} = FastRational{T, IsReduced}(numer, one(T))
-
-@inline FastRational(numer::T, denom::T) where {T<:SignedInt} = FastRational{T, MayReduce}(numer, denom)
-@inline FastRational(::Type{MayReduce}, numer::T, denom::T) where {T<:SignedInt} = FastRational{T, MayReduce}(numer, denom)
-@inline FastRational(::Type{IsReduced}, numer::T, denom::T) where {T<:SignedInt} = FastRational{T, IsReduced}(numer, denom)
-
-
-
-# FastRationals are created with denom == abs(denom)
-function canonical(num::T, den::T) where {T<:SignedInt}
-    num = flipsign(num, den)
-    den = abs(den)
-    gcdivisor = gcd(den, num)
-    gcdivisor === one(T) && return FastRational{T, IsReduced}(num, den)
-    num = div(num, gcdivisor)
-    den = div(den, gcdivisor)
-    return FastRational{T, IsReduced}(num, den)
-end
-
-# FastRationals are created with denom == abs(denom)
-function canonical(q::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable}
-    den = denom(q)
-    num = numer(q)
-    gcdivisor = gcd(den, num)
-    gcdivisor === one(T) && return FastRational{T, IsReduced}(num, den)
-    num = div(num, gcdivisor)
-    den = div(den, gcdivisor)
-    return FastRational{T, IsReduced}(num, den)
-end
-
-
-
+        
 @inline sign(x::FastRational{T, R})  where {T<:SignedInt, R<:Reduceable} = oftype(x, sign(numer(x)))
 @inline signbit(x::FastRational{T, R})  where {T<:SignedInt, R<:Reduceable} = signbit(numer(x))
 @inline copysign(x::FastRational{T,R}, y::Real) where {T<:SignedInt, R<:Reduceable} = FastRational{T, R}(copysign(numer(x), y), denom(x))
