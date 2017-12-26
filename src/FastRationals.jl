@@ -4,12 +4,13 @@ export FastRational
 
 
 import Base: convert, promote_rule, eltype,
-    show, read, write,
+    string, show, read, write,
     checked_add, checked_sub, checked_mul, power_by_squaring,
     numerator, denominator, widen, rationalize, 
     isinteger, iszero, isone,
-    sign, signbit, copysign, flipsign, typemin, typemax,
-    ==, !=, <=, <, >=, >, cmp, -, +, *, inv, /, //, rem, mod, fma, div, fld, cld,
+    sign, signbit, copysign, flipsign, typemin, typemax, abs,
+    ==, !=, <=, <, >=, >, isless, isequal, cmp,
+    -, +, *, inv, /, //, rem, mod, fma, div, fld, cld,
     trunc, floor, ceil, round, ^
 
 import Base.Checked: add_with_overflow, sub_with_overflow, mul_with_overflow
@@ -81,28 +82,28 @@ convert(::Type{PlainRational}, x::FastRational) = throw(ErrorException("conversi
 @inline isinteger(x::FastRational) = abs(denominator(x)) === one(T)
 @inline iszero(x::FastRational)  = abs(numerator(x)) === zero(T)
 
-@inline Base.Math.abs(x::FastRational)   = FastRational(abs(numerator(x)), denominator(x))
+@inline abs(x::FastRational)   = FastRational(abs(numerator(x)), denominator(x))
 
-@inline Base.Math.inv(x::FastRational)  = FastRational(denominator(x), numerator(x))
+@inline inv(x::FastRational)  = FastRational(denominator(x), numerator(x))
 
-@inline function Base.:(-)(x::FastRational)  
+@inline function (-)(x::FastRational)  
     numerator(x) === typemin(T) && throw(OverflowError())
     return FastRational(-numerator(x), denominator(x))
 end
 
-Base.:(/)(x::FastRational, y::FastRational) = x // y
+(/)(x::FastRational, y::FastRational) = x // y
 
 
 # add
 
-function Base.:(+)(x::FastRational, y::FastRational) 
+function (+)(x::FastRational, y::FastRational) 
     numer, denom, ovf = add_with_overflow_for_rational(x, y)
     ovf && throw(OverflowError())
     
     return PlainRational(numer, denom)
 end
 
-function Base.:(+)(x::PlainRational, y::PlainRational) 
+function (+)(x::PlainRational, y::PlainRational) 
     numer, denom, ovf = add_with_overflow_for_rational(x, y)
     !ovf && return PlainRational(numer, denom)
 
@@ -114,7 +115,7 @@ function Base.:(+)(x::PlainRational, y::PlainRational)
     return PlainRational(numer, denom)
 end
 
-function Base.:(+)(x::FastRational, y::PlainRational) 
+function (+)(x::FastRational, y::PlainRational) 
     numer, denom, ovf = add_with_overflow_for_rational(x, y)
     !ovf && return PlainRational(numer, denom)
 
@@ -125,7 +126,7 @@ function Base.:(+)(x::FastRational, y::PlainRational)
     return PlainRational(numer, denom)
 end
 
-function Base.:(+)(x::PlainRational, y::FastRational) 
+function (+)(x::PlainRational, y::FastRational) 
     numer, denom, ovf = add_with_overflow_for_rational(x, y)
     !ovf && return PlainRational(numer, denom)
 
@@ -136,22 +137,22 @@ function Base.:(+)(x::PlainRational, y::FastRational)
     return PlainRational(numer, denom)
 end
 
-Base.:(+)(x::FastRational, y::Rational{T})  where T = (+)(promote(x, y)...)
-Base.:(+)(x::Rational{T}, y::FastRational)  where T = (+)(promote(x, y)...)
-Base.:(+)(x::PlainRational, y::Rational{T}) where T = (+)(promote(x, y)...)
-Base.:(+)(x::Rational{T}, y::PlainRational) where T = (+)(promote(x, y)...)
+(+)(x::FastRational, y::Rational{T})  where T = (+)(promote(x, y)...)
+(+)(x::Rational{T}, y::FastRational)  where T = (+)(promote(x, y)...)
+(+)(x::PlainRational, y::Rational{T}) where T = (+)(promote(x, y)...)
+(+)(x::Rational{T}, y::PlainRational) where T = (+)(promote(x, y)...)
 
 
 # subtract
 
-function Base.:(-)(x::FastRational, y::FastRational) 
+function (-)(x::FastRational, y::FastRational) 
     numer, denom, ovf = sub_with_overflow_for_rational(x, y)
     ovf && throw(OverflowError())
     
     return PlainRational(numer, denom)
 end
 
-function Base.:(-)(x::PlainRational, y::PlainRational) 
+function (-)(x::PlainRational, y::PlainRational) 
     numer, denom, ovf = sub_with_overflow_for_rational(x, y)
     !ovf && return PlainRational(numer, denom)
 
@@ -163,7 +164,7 @@ function Base.:(-)(x::PlainRational, y::PlainRational)
     return PlainRational(numer, denom)
 end
 
-function Base.:(-)(x::FastRational, y::PlainRational) 
+function (-)(x::FastRational, y::PlainRational) 
     numer, denom, ovf = sub_with_overflow_for_rational(x, y)
     !ovf && return PlainRational(numer, denom)
 
@@ -174,7 +175,7 @@ function Base.:(-)(x::FastRational, y::PlainRational)
     return PlainRational(numer, denom)
 end
 
-function Base.:(-)(x::PlainRational, y::FastRational) 
+function (-)(x::PlainRational, y::FastRational) 
     numer, denom, ovf = sub_with_overflow_for_rational(x, y)
     !ovf && return PlainRational(numer, denom)
 
@@ -185,21 +186,21 @@ function Base.:(-)(x::PlainRational, y::FastRational)
     return PlainRational(numer, denom)
 end
 
-Base.:(-)(x::FastRational, y::Rational{T})  where T = (-)(promote(x, y)...)
-Base.:(-)(x::Rational{T}, y::FastRational)  where T = (-)(promote(x, y)...)
-Base.:(-)(x::PlainRational, y::Rational{T}) where T = (-)(promote(x, y)...)
-Base.:(-)(x::Rational{T}, y::PlainRational) where T = (-)(promote(x, y)...)
+(-)(x::FastRational, y::Rational{T})  where T = (-)(promote(x, y)...)
+(-)(x::Rational{T}, y::FastRational)  where T = (-)(promote(x, y)...)
+(-)(x::PlainRational, y::Rational{T}) where T = (-)(promote(x, y)...)
+(-)(x::Rational{T}, y::PlainRational) where T = (-)(promote(x, y)...)
 
 # multiply
 
-function Base.:(*)(x::FastRational, y::FastRational) 
+function (*)(x::FastRational, y::FastRational) 
     numer, denom, ovf = mul_with_overflow_for_rational(x, y)
     ovf && throw(OverflowError())
     
     return PlainRational(numer, denom)
 end
 
-function Base.:(*)(x::PlainRational, y::PlainRational) 
+function (*)(x::PlainRational, y::PlainRational) 
     numer, denom, ovf = mul_with_overflow_for_rational(x, y)
     !ovf && return PlainRational(numer, denom)
 
@@ -211,7 +212,7 @@ function Base.:(*)(x::PlainRational, y::PlainRational)
     return PlainRational(numer, denom)
 end
 
-function Base.:(*)(x::FastRational, y::PlainRational) 
+function (*)(x::FastRational, y::PlainRational) 
     numer, denom, ovf = mul_with_overflow_for_rational(x, y)
     !ovf && return PlainRational(numer, denom)
 
@@ -222,7 +223,7 @@ function Base.:(*)(x::FastRational, y::PlainRational)
     return PlainRational(numer, denom)
 end
 
-function Base.:(*)(x::PlainRational, y::FastRational) 
+function (*)(x::PlainRational, y::FastRational) 
     numer, denom, ovf = mul_with_overflow_for_rational(x, y)
     !ovf && return PlainRational(numer, denom)
 
@@ -233,21 +234,21 @@ function Base.:(*)(x::PlainRational, y::FastRational)
     return PlainRational(numer, denom)
 end
 
-Base.:(*)(x::FastRational, y::Rational{T})  where T = (*)(promote(x, y)...)
-Base.:(*)(x::Rational{T}, y::FastRational)  where T = (*)(promote(x, y)...)
-Base.:(*)(x::PlainRational, y::Rational{T}) where T = (*)(promote(x, y)...)
-Base.:(*)(x::Rational{T}, y::PlainRational) where T = (*)(promote(x, y)...)
+(*)(x::FastRational, y::Rational{T})  where T = (*)(promote(x, y)...)
+(*)(x::Rational{T}, y::FastRational)  where T = (*)(promote(x, y)...)
+(*)(x::PlainRational, y::Rational{T}) where T = (*)(promote(x, y)...)
+(*)(x::Rational{T}, y::PlainRational) where T = (*)(promote(x, y)...)
 
 # divide
 
-function Base.:(//)(x::FastRational, y::FastRational) 
+function (//)(x::FastRational, y::FastRational) 
     numer, denom, ovf = div_with_overflow_for_rational(x, y)
     ovf && throw(OverflowError())
     
     return PlainRational(numer, denom)
 end
 
-function Base.:(//)(x::PlainRational, y::PlainRational) 
+function (//)(x::PlainRational, y::PlainRational) 
     numer, denom, ovf = div_with_overflow_for_rational(x, y)
     !ovf && return PlainRational(numer, denom)
 
@@ -259,7 +260,7 @@ function Base.:(//)(x::PlainRational, y::PlainRational)
     return PlainRational(numer, denom)
 end
 
-function Base.:(//)(x::FastRational, y::PlainRational) 
+function (//)(x::FastRational, y::PlainRational) 
     numer, denom, ovf = div_with_overflow_for_rational(x, y)
     !ovf && return PlainRational(numer, denom)
 
@@ -270,7 +271,7 @@ function Base.:(//)(x::FastRational, y::PlainRational)
     return PlainRational(numer, denom)
 end
 
-function Base.:(//)(x::PlainRational, y::FastRational) 
+function (//)(x::PlainRational, y::FastRational) 
     numer, denom, ovf = div_with_overflow_for_rational(x, y)
     !ovf && return PlainRational(numer, denom)
 
@@ -281,10 +282,10 @@ function Base.:(//)(x::PlainRational, y::FastRational)
     return PlainRational(numer, denom)
 end
 
-Base.:(//)(x::FastRational, y::Rational{T})  where T = (//)(promote(x, y)...)
-Base.:(//)(x::Rational{T}, y::FastRational)  where T = (//)(promote(x, y)...)
-Base.:(//)(x::PlainRational, y::Rational{T}) where T = (//)(promote(x, y)...)
-Base.:(//)(x::Rational{T}, y::PlainRational) where T = (//)(promote(x, y)...)
+(//)(x::FastRational, y::Rational{T})  where T = (//)(promote(x, y)...)
+(//)(x::Rational{T}, y::FastRational)  where T = (//)(promote(x, y)...)
+(//)(x::PlainRational, y::Rational{T}) where T = (//)(promote(x, y)...)
+(//)(x::Rational{T}, y::PlainRational) where T = (//)(promote(x, y)...)
 
 
 # core parts of add, sub
@@ -337,63 +338,26 @@ end
     return numer, denom, ovf
 end
 
-
-Base.string(x::FastRational) = string(numerator(x), "//", denominator(x))
-function Base.string(x::PlainRational)
-    num, den = canonical(x)
-    return string(num, "//", den)
-end
-
-function show(io::IO, x::FastRational)
-    print(io, string(x))
-end
-
-function show(io::IO, x::PlainRational)
-    print(io, string(x))
-end
-
-function read(s::IO, ::Type{T}) where T<:FastRational
-    num = read(s,T)
-    den = read(s,T)
-    return FastRational(num,den)
-end
-
-function write(s::IO, x::FastRational)
-    return write(s, numerator(z), denominator(z))
-end
-
-function read(s::IO, ::Type{T}) where T<:PlainRational
-    num = read(s,T)
-    den = read(s,T)
-    return FastRational(r,i)
-end
-
-function write(s::IO, x::PlainRational)
-    num, den = canonical(x)
-    return write(s, numerator(z), denominator(z))
-end
-
-
-Base.:(==)(x::Rational{T}, y::FastRational) where T =
+(==)(x::Rational{T}, y::FastRational) where T =
    numerator(x) == numerator(y) && denominator(x) == denominator(y)
-Base.:(!=)(x::Rational{T}, y::FastRational) where T = !(x == y)
-Base.:(==)(x::FastRational, y::Rational{T}) where T =
+(!=)(x::Rational{T}, y::FastRational) where T = !(x == y)
+(==)(x::FastRational, y::Rational{T}) where T =
    numerator(x) == numerator(y) && denominator(x) == denominator(y)
-Base.:(!=)(x::FastRational, y::Rational{T}) where T = !(x == y)
+(!=)(x::FastRational, y::Rational{T}) where T = !(x == y)
 
-Base.:(==)(x::Rational{T}, y::PlainRational) where T = (numerator(x), denominator(x)) == canonical(y)
-Base.:(!=)(x::Rational{T}, y::PlainRational) where T = (numerator(x), denominator(x)) != canonical(y)
-Base.:(==)(x::PlainRational, y::Rational{T}) where T = canonical(x) == (numerator(t), denominator(y))
-Base.:(!=)(x::PlainRational, y::Rational{T}) where T = canonical(x) != (numerator(y), denominator(y))
+(==)(x::Rational{T}, y::PlainRational) where T = (numerator(x), denominator(x)) == canonical(y)
+(!=)(x::Rational{T}, y::PlainRational) where T = (numerator(x), denominator(x)) != canonical(y)
+(==)(x::PlainRational, y::Rational{T}) where T = canonical(x) == (numerator(t), denominator(y))
+(!=)(x::PlainRational, y::Rational{T}) where T = canonical(x) != (numerator(y), denominator(y))
 
-Base.:(<)(x::Rational{T}, y::FastRational) where T = x < Rational{T}(y)
-Base.:(<=)(x::Rational{T}, y::FastRational) where T = x <= Rational{T}(y)
-Base.:(<)(x::FastRational, y::Rational{T}) where T = Rational{T}(x) < y
-Base.:(<=)(x::FastRational, y::Rational{T}) where T = Rational{T}(x) <= y
+(<)(x::Rational{T}, y::FastRational) where T = x < Rational{T}(y)
+(<=)(x::Rational{T}, y::FastRational) where T = x <= Rational{T}(y)
+(<)(x::FastRational, y::Rational{T}) where T = Rational{T}(x) < y
+(<=)(x::FastRational, y::Rational{T}) where T = Rational{T}(x) <= y
 
-Base.:(==)(x::FastRational, y::FastRational) =
+(==)(x::FastRational, y::FastRational) =
    numerator(x) === numerator(y) && denominator(x) === denominator(y)
-Base.:(!=)(x::FastRational, y::FastRational) =
+(!=)(x::FastRational, y::FastRational) =
    numerator(x) !== numerator(y) || denominator(x) !== denominator(y)
 
 for F in (:(>), :(>=), :(<=), :(<))
@@ -413,13 +377,40 @@ for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
 end
 
 
-Base.isequal(x::FastRational, y::FastRational) = x == y
-Base.isless(x::FastRational, y::FastRational) = x <= y
-Base.isequal(x::FastRational, y::PlainRational) = x == y
-Base.isless(x::FastRational, y::PlainRational) = x <= y
-Base.isequal(x::PlainRational, y::FastRational) = x == y
-Base.isless(x::PlainRational, y::FastRational) = x <= y
-Base.isequal(x::PlainRational, y::PlainRational) = x == y
-Base.isless(x::PlainRational, y::PlainRational) = x <= y
+isequal(x::FastRational, y::FastRational) = x == y
+isless(x::FastRational, y::FastRational) = x <= y
+isequal(x::FastRational, y::PlainRational) = x == y
+isless(x::FastRational, y::PlainRational) = x <= y
+isequal(x::PlainRational, y::FastRational) = x == y
+isless(x::PlainRational, y::FastRational) = x <= y
+isequal(x::PlainRational, y::PlainRational) = x == y
+isless(x::PlainRational, y::PlainRational) = x <= y
+
+
+
+
+string(x::FastRational) = string(numerator(x), "//", denominator(x))
+@inline string(x::PlainRational) = string(FastRational(x))
+
+function show(io::IO, x::FastRational)
+    print(io, string(x))
+end
+@inline show(io::IO, x::PlainRational) = show(io, FastRational(x))
+show(x::FastRational) = show(STDOUT, FastRational(x))
+@inline show(x::PlainRational) = show(FastRational(x))
+
+function read(io::IO, ::Type{T}) where T<:FastRational
+    num = read(io,T)
+    den = read(io,T)
+    return FastRational(num, den)
+end
+@inline read(io::IO, x::PlainRational) = read(io, FastRational(x))
+
+function write(io::IO, x::FastRational)
+    return write(io, numerator(z), denominator(z))
+end
+@inline write(io::IO, x::PlainRational) = write(io, FastRational(x))
+
 
 end # module
+
