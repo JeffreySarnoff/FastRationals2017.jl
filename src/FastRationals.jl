@@ -52,10 +52,9 @@ const PlainRational = NamedTuple{(:num, :den, :void)}
 eltype(x::PlainRational) = typeof(x.num)
 
 @inline canonical(x::PlainRational) = canonical(numerator(x), denominator(x))
-@inline canonize(x::PlainRational) = x(canonical(x))
 
 @inline PlainRational(num::T, den::T) where T = PlainRational((num, den, nothing))
-@inline PlainRational(numden::Tuple{T,T}) where T = PlainRational((numden.num, numden.den, nothing))
+@inline PlainRational(numden::Tuple{T,T}) where T = PlainRational((numden..., nothing))
 
 
 const FastRational = NamedTuple{(:num, :den)}
@@ -71,6 +70,8 @@ eltype(x::FastRational) = typeof(x.num)
 @inline FastRational(q::Rational{T}) where T = FastRational((q.num, q.den))
 @inline FastRational(q::PlainRational) = FastRational(canonical(q.num, q.den))
 
+@inline canonize(q::PlainRational) = FastRational(canonical(q))
+@inline canonize(q::FastRational) = q
 
 convert(::Type{FastRational}, q::PlainRational) = FastRational( canonical(q) )
 promote_rule(::Type{FastRational}, ::Type{PlainRational}) = FastRational
