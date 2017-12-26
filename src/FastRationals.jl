@@ -329,14 +329,6 @@ end
 
 
 
-
-
-
-
-
-
-
-
 @inline sign(x::FastRational)  = oftype(x, sign(numerator(x)))
 @inline signbit(x::FastRational)  = signbit(numerator(x))
 @inline copysign(x::FastRational{T,R}, y::Real) = FastRational(copysign(numerator(x), y), denominator(x))
@@ -390,22 +382,22 @@ function write(s::IO, x::PlainRational)
 end
 
 
-Base.:(==)(x::Rational{T}, y::FastRational) =
+Base.:(==)(x::Rational{T}, y::FastRational) where T =
    numerator(x) == numerator(y) && denominator(x) == denominator(y)
-Base.:(!=)(x::Rational{T}, y::FastRational) = !(x == y)
-Base.:(==)(x::FastRational, y::Rational{T}) =
+Base.:(!=)(x::Rational{T}, y::FastRational) where T = !(x == y)
+Base.:(==)(x::FastRational, y::Rational{T}) where T =
    numerator(x) == numerator(y) && denominator(x) == denominator(y)
-Base.:(!=)(x::FastRational, y::Rational{T}) = !(x == y)
+Base.:(!=)(x::FastRational, y::Rational{T}) where T = !(x == y)
 
-Base.:(==)(x::Rational{T}, y::PlainRational) = (numerator(x), denominator(x)) == canonical(y)
-Base.:(!=)(x::Rational{T}, y::PlainRational) = (numerator(x), denominator(x)) != canonical(y)
-Base.:(==)(x::PlainRational, y::Rational{T}) = canonical(x) == (numerator(t), denominator(y))
-Base.:(!=)(x::PlainRational, y::Rational{T}) = canonical(x) != (numerator(y), denominator(y))
+Base.:(==)(x::Rational{T}, y::PlainRational) where T = (numerator(x), denominator(x)) == canonical(y)
+Base.:(!=)(x::Rational{T}, y::PlainRational) where T = (numerator(x), denominator(x)) != canonical(y)
+Base.:(==)(x::PlainRational, y::Rational{T}) where T = canonical(x) == (numerator(t), denominator(y))
+Base.:(!=)(x::PlainRational, y::Rational{T}) where T = canonical(x) != (numerator(y), denominator(y))
 
-Base.:(<)(x::Rational{T}, y::FastRational) = x < Rational{T}(y)
-Base.:(<=)(x::Rational{T}, y::FastRational) = x <= Rational{T}(y)
-Base.:(<)(x::FastRational, y::Rational{T}) = Rational{T}(x) < y
-Base.:(<=)(x::FastRational, y::Rational{T}) = Rational{T}(x) <= y
+Base.:(<)(x::Rational{T}, y::FastRational) where T = x < Rational{T}(y)
+Base.:(<=)(x::Rational{T}, y::FastRational) where T = x <= Rational{T}(y)
+Base.:(<)(x::FastRational, y::Rational{T}) where T = Rational{T}(x) < y
+Base.:(<=)(x::FastRational, y::Rational{T}) where T = Rational{T}(x) <= y
 
 Base.:(==)(x::FastRational, y::FastRational) =
    numerator(x) === numerator(y) && denominator(x) === denominator(y)
