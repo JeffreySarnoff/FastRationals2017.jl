@@ -179,6 +179,102 @@ Base.:(-)(x::Rational{T}, y::FastRational)  where T = (-)(promote(x, y)...)
 Base.:(-)(x::PlainRational, y::Rational{T}) where T = (-)(promote(x, y)...)
 Base.:(-)(x::Rational{T}, y::PlainRational) where T = (-)(promote(x, y)...)
 
+# multiply
+
+function Base.:(*)(x::FastRational, y::FastRational) 
+    numer, denom, ovf = mul_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+    
+    return PlainRational(numer, denom)
+end
+
+function Base.:(*)(x::PlainRational, y::PlainRational) 
+    numer, denom, ovf = mul_with_overflow_for_rational(x, y)
+    !ovf && return PlainRational(numer, denom)
+
+    x = canonize(x)
+    y = canonize(y)
+    numer, denom, ovf = mul_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+
+    return PlainRational(numer, denom)
+end
+
+function Base.:(*)(x::FastRational, y::PlainRational) 
+    numer, denom, ovf = mul_with_overflow_for_rational(x, y)
+    !ovf && return PlainRational(numer, denom)
+
+    y = canonize(y)
+    numer, denom, ovf = mul_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+
+    return PlainRational(numer, denom)
+end
+
+function Base.:(*)(x::PlainRational, y::FastRational) 
+    numer, denom, ovf = mul_with_overflow_for_rational(x, y)
+    !ovf && return PlainRational(numer, denom)
+
+    y = canonize(y)
+    numer, denom, ovf = mul_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+
+    return PlainRational(numer, denom)
+end
+
+Base.:(*)(x::FastRational, y::Rational{T})  where T = (*)(promote(x, y)...)
+Base.:(*)(x::Rational{T}, y::FastRational)  where T = (*)(promote(x, y)...)
+Base.:(*)(x::PlainRational, y::Rational{T}) where T = (*)(promote(x, y)...)
+Base.:(*)(x::Rational{T}, y::PlainRational) where T = (*)(promote(x, y)...)
+
+# divide
+
+function Base.:(//)(x::FastRational, y::FastRational) 
+    numer, denom, ovf = div_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+    
+    return PlainRational(numer, denom)
+end
+
+function Base.:(//)(x::PlainRational, y::PlainRational) 
+    numer, denom, ovf = div_with_overflow_for_rational(x, y)
+    !ovf && return PlainRational(numer, denom)
+
+    x = canonize(x)
+    y = canonize(y)
+    numer, denom, ovf = div_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+
+    return PlainRational(numer, denom)
+end
+
+function Base.:(//)(x::FastRational, y::PlainRational) 
+    numer, denom, ovf = div_with_overflow_for_rational(x, y)
+    !ovf && return PlainRational(numer, denom)
+
+    y = canonize(y)
+    numer, denom, ovf = div_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+
+    return PlainRational(numer, denom)
+end
+
+function Base.:(//)(x::PlainRational, y::FastRational) 
+    numer, denom, ovf = div_with_overflow_for_rational(x, y)
+    !ovf && return PlainRational(numer, denom)
+
+    y = canonize(y)
+    numer, denom, ovf = div_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+
+    return PlainRational(numer, denom)
+end
+
+Base.:(//)(x::FastRational, y::Rational{T})  where T = (//)(promote(x, y)...)
+Base.:(//)(x::Rational{T}, y::FastRational)  where T = (//)(promote(x, y)...)
+Base.:(//)(x::PlainRational, y::Rational{T}) where T = (//)(promote(x, y)...)
+Base.:(//)(x::Rational{T}, y::PlainRational) where T = (//)(promote(x, y)...)
+
 
 # core parts of add, sub
 
