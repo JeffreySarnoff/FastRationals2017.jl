@@ -14,35 +14,9 @@ import Base: convert, promote_rule, eltype,
 
 import Base.Checked: add_with_overflow, sub_with_overflow, mul_with_overflow
 
-const SignedInt  = Union{Int64, Int32, Int16, Int128, BigInt, Int8}
 
-const IsReduced  = Val{:IsReduced}
-const MayReduce  = Val{:MayReduce}
-const Reduceable = Union{IsReduced, MayReduce}
-
-abstract type AbstractRational{T} <: Real end
-abstract type GenericRational{T}  <: AbstractRational{T} end
-abstract type ReducedRational{T}  <: GenericRational{T}  end
-
-struct PlainRational{T} <: GenericRational{T}
-    num::T
-    den::T
-end
-
-@inline numerator(x::PlainRational{T}) where T = x.num
-@inline denominator(x::PlainRational{T}) where T = x.den
-@inline value(x::PlainRational{T}) where T = (x.num, x.den)
-eltype(x::PlainRational{T}) where T = T
-
-struct FastRational{T} <: ReducedRational{T}
-    num::T
-    den::T
-end
-
-@inline numerator(x::FastRational{T}) where T = x.num
-@inline denominator(x::FastRational{T}) where T = x.den
-@inline value(x::FastRational{T}) where T = (x.num, x.den)
-eltype(x::FastRational{T}) where T = T
+const SysInt = Union{Int64, Int32, Int16, Int8}
+const SignedInt = Union{SysInt, Int128, BigInt}
 
 # FastRationals are created with denom == abs(denom)
 function canonical(num::T, den::T) where {T<:SignedInt}
@@ -60,7 +34,7 @@ function canonical(num::T, den::T) where {T<:SignedInt}
     return num, den
 end
 
-function canonical(num::T, den::T) where {T}
+function canonical(num::T, den::T) where {T<:SysInt}
     gcdenom = gcd(num, den)
     if gcdenom !== one(T)
         num = div(num, gcdenom)
@@ -69,216 +43,100 @@ function canonical(num::T, den::T) where {T}
     return num, den
 end
 
-@inline canonical(x::PlainRational{T}) where {T} =
-    FastRational(canonical(numerator(x), denominator(x))...,)
 
-@inline function convert(::Type{FastRational{T}}, x::PlainRational{T}) where T<:Union{Int128, Int64, Int32, Int16, Int8}
-    return canonical(x)
-end
-        
-function convert(::Type{PlainRational{T}}, x::FastRational{T}) where T
-    throw(ErrorException("disallowed: convert(PlainRational, x::FastRational)"))
-end
-# !!! Target != typeof(convert(::Type{Target}, x::Source)) !!!
-convert(::Type{PlainRational{T}}, x::T) where {T<:Signed} =
-    FastRational(x, one(T))
-        
-convert(::Type{Rational{T}}, x::R) where {T<:Signed, R<:Union{FastRational{T}, PlainRational{T}}} =
-    Rational(numerator(x), denominator(x))
-convert(::Type{T}, x::FastRational{T}) where {T} =
-    denominator(x) === one(T) ? numerator(x) : throw(InexactError())
-convert(::Type{T}, x::PlainRational{T}) where {T} =
-    convert(T, convert(FastRational{T}, x))
+const PlainRational = NamedTuple{(:num, :den, :void)}
 
-promote_rule(::Type{R}, ::Type{T}) where {T, R<:Union{FastRational{T}, PlainRational{T}}} =
-    R
-promote_rule(::Type{R}, x::Rational{T}) where {T<:Signed, R<:Union{FastRational{T}, PlainRational{T}}} =
-    R
-promote_rule(::Type{FastRational{T}}, ::Type{PlainRational{T}}) where T<:Signed =
-    FastRational{T}
+@inline numerator(x::PlainRational) = x.num
+@inline denominator(x::PlainRational) = x.den
+@inline value(x::PlainRational) = (x.num, x.den)
+eltype(x::PlainRational) = typeof(x.num)
 
-"""
-      FastRationals are always in reduced terms
-"""
-const FastRationalNT  = NamedTuple{(:num, :den)}
+@inline canonical(x::PlainRational) = canonical(numerator(x), denominator(x))
+@inline canonize(x::PlainRational) = x(canonical(x))
 
-@inline numerator(x::FastRationalNT) where T = x.num
-@inline denominator(x::FastRationalNT) where T = x.den
-@inline value(x::FastRationalNT) = (x.num, x.den)
-eltype(x::FastRationalNT) where T = T
-
-const PlainRationalNT = NamedTuple{(:num, :den, :void)}
-@inline numerator(x::PlainRationalNT) where T = x.num
-@inline denominator(x::PlainRationalNT) where T = x.den
-@inline value(x::PlainRationalNT) = (x.num, x.den)
-eltype(x::PlainRationalNT) where T = T
+@inline PlainRational(num::T, den::T) where T = PlainRational((num, den, nothing))
+@inline PlainRational(numden::Tuple{T,T}) where T = PlainRational((numden.num, numden.den, nothing))
 
 
-@inline NT_PlainRational(num::T, den::T) where T = PlainRationalNT((num, den, nothing))
-@inline NT_FastRational(num::T, den::T) where T = FastRationalNT((num, den))
-@inline NT_PlainRational(numden::Tuple{T,T}) where T = PlainRationalNT(numden.num, numden.den, nothing)
-@inline NT_FastRational(numden::Tuple{T,T}) where T = FastRationalNT(numden)
-@inline NT_FastRational(nt::PlainRationalNT) = NT_FastRational(canonical(nt.num, nt.den))
+const FastRational = NamedTuple{(:num, :den)}
 
-@inline Base.convert(::Type{PlainRationalNT}, x::PlainRational{T}) where T =
-    NT_PlainRational(numerator(x), denominator(x))
-@inline Base.convert(::Type{FastRationalNT}, x::FastRational{T}) where T =
-    NT_FastRational(numerator(x), denominator(x))
-@inline Base.convert(::Type{FastRationalNT}, x::PlainRational{T}) where T =
-    NT_FastRational(canonical(numerator(x), denominator(x)))
+@inline numerator(x::FastRational) = x.num
+@inline denominator(x::FastRational) = x.den
+@inline value(x::FastRational) = (x.num, x.den)
+eltype(x::FastRational) = typeof(x.num)
+
+@inline canonical(x::FastRational) = values(x)
+
+@inline FastRational(num::T, den::T) where T = FastRational((num, den))
+@inline FastRational(q::Rational{T}) where T = FastRational((q.num, q.den))
+@inline FastRational(q::PlainRational) = FastRational(canonical(q.num, q.den))
 
 
+convert(::Type{FastRational}, q::PlainRational) = FastRational( canonical(q) )
+promote_rule(::Type{FastRational}, ::Type{PlainRational}) = FastRational
+convert(::Type{FastRational}, q::Rational{T}) where T<:Signed = FastRational(numerator(q), denominator(q))
+convert(::Type{Rational{T}}, q::FastRational) where T<:Signed = Rational(numerator(q), denominator(q))
+promote_rule(::Type{FastRational}, ::Type{Rational{T}}) where T<:Signed = FastRational
 
-function Base.:(+)(x::FastRationalNT, y::FastRationalNT) 
+PlainRational(q::Rational{T}) where T = throw(ErrorException("PlainRational(Rational) is disallowed."))
+PlainRational(q::FastRational) = throw(ErrorException("PlainRational(FastRational) is disallowed."))
+convert(::Type{PlainRational}, x::FastRational) = throw(ErrorException("conversion from FastRational to PlainRational is disallowed."))
+
+
+@inline function add_with_overflow_for_rational(x, y)
     ovf = false
-    x_den, y_den = denominator(x), denominator(y)
-    den, ovfl = mul_with_overflow(den_x, den_y)
+    numer, ovfl = mul_with_overflow(numerator(x), denominator(y)) # here, numer is a temp
     ovf |= ovfl
-    num_a, ovfl = mul_with_overflow(numerator(x), y_den)
+    denom, ovfl = mul_with_overflow(denominator(x), numerator(y)) # here, denom is a temp
     ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(den_x, numerator(y))
+    numer, ovfl = add_with_overflow(numer, denom) # numerator of sum
     ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
+    denom, ovfl = mul_with_overflow(denominator(x), denominator(y)) # denominator of sum
     ovf |= ovfl
+    
+    return numer, denom, ovfl
+end    
 
+function Base.:(+)(x::FastRational, y::FastRational) 
+    numer, denom, ovf = add_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+    
+    return PlainRational(numer, denom)
+end
+
+function Base.:(+)(x::PlainRational, y::PlainRational) 
+    numer, denom, ovf = add_with_overflow_for_rational(x, y)
+    !ovf && return PlainRational(numer, denom)
+
+    x = canonize(x)
+    y = canonize(y)
+    numer, denom, ovf = add_with_overflow_for_rational(x, y)
     ovf && throw(OverflowError())
 
-    return PlainRationalNT(num, den)
+    return PlainRational(numer, denom)
 end
 
-function Base.:(+)(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce})  where {T<:SignedInt} 
-    ovf = false
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
+function Base.:(+)(x::FastRational, y::PlainRational) 
+    numer, denom, ovf = add_with_overflow_for_rational(x, y)
+    !ovf && return PlainRational(numer, denom)
 
-    !ovf && return FastRational{T, MayReduce}(num, den)
-
-    x = canonical(x)
-    y = canonical(y)
-
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
+    y = canonize(y)
+    numer, denom, ovf = add_with_overflow_for_rational(x, y)
     ovf && throw(OverflowError())
 
-    return FastRational{T, MayReduce}(num, den)
+    return PlainRational(numer, denom)
 end
 
-function Base.:(+)(x::FastRational{T, R}, y::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} 
-    ovf = false
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
+function Base.:(+)(x::PlainRational, y::FastRational) 
+    numer, denom, ovf = add_with_overflow_for_rational(x, y)
+    !ovf && return PlainRational(numer, denom)
 
-    !ovf && return FastRational{T, MayReduce}(num, den)
-
-    x = isreduced(x) ? x : canonical(x)
-    y = isreduced(y) ? y : canonical(y)
-
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
+    y = canonize(y)
+    numer, denom, ovf = add_with_overflow_for_rational(x, y)
     ovf && throw(OverflowError())
 
-    return FastRational{T, MayReduce}(num, den)
+    return PlainRational(numer, denom)
 end
-
-function Base.:(+)(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} 
-    ovf = false
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
-    !ovf && return FastRational{T, MayReduce}(num, den)
-
-    y = canonical(y)
-
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
-    ovf && throw(OverflowError())
-
-    return FastRational{T, MayReduce}(num, den)
-end
-
-@inline Base.:(+)(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduced})  where {T<:SignedInt} = y+x
-                
-                
-                
-
-@inline function convert(::Type{FastRational{T}}, x::PlainRational{T}) where T<:Union{Int128, Int64, Int32, Int16, Int8}
-    return canonical(x)
-end
-        
-function convert(::Type{PlainRational{T]}, x::FastRational{T}) where T
-    throw(ErrorException("disallowed: convert(PlainRational, x::FastRational)"))
-end
-# !!! Target != typeof(convert(::Type{Target}, x::Source)) !!!
-convert(::Type{PlainRational{T}}, x::T) where {T<:Signed} =
-    FastRational(x, one(T))
-        
-convert(::Type{Rational{T}, x::R) where {T<:Signed, R<:Union{FastRational{T}, PlainRational{T}}} =
-    Rational(numerator(x), denominator(x))
-convert(::Type{T}, x::FastRational{T}) where {T} =
-    denominator(x) === one(T) ? numerator(x) : throw(InexactError())
-convert(::Type{T}, x::PlainRational{T}) where {T} =
-    convert(T, convert(FastRational{T}, x))
-
-promote_rule(::Type{R}, ::Type{T}) where {T, R<:Union{FastRational{T}, PlainRational{T}}} =
-    R
-promote_rule(::Type{R}, x::Rational{T}}) where {T<:Signed, R<:Union{FastRational{T}, PlainRational{T}}} =
-    R
-promote_rule(::Type{FastRational{T}}, ::Type{PlainRational{T}}) where T<:Signed =
-    FastRational{T}
-
-const PlainRationalNT = NamedTuple{(:num, :den)}
-const FastRationalNT  = NamedTuple{(:num, :den)}
-@inline NT_PlainRational(num::T, den::T) where T = PlainRationalNT((num, den))
-@inline NT_FastRational(num::T, den::T) where T = FastRationalNT((num, den))
-@inline NT_PlainRational(numden::Tuple{T,T}) where T = PlainRationalNT(numden)
-@inline NT_FastRational(numden::Tuple{T,T}) where T = FastRationalNT(numden)
-@inline NT_FastRational(nt::PlainRationalNT) = NT_FastRational(canonical(nt.num, nt.den)))
-
-@inline Base.convert(::Type{PlainRationalNT}, x::PlainRational{T}) where T =
-    NT_PlainRational(numerator(x), denominator(x))
-@inline Base.convert(::Type{FastRationalNT}, x::FastRational{T}) where T =
-    NT_FastRational(numerator(x), denominator(x))
-@inline Base.convert(::Type{FastRationalNT}, x::PlainRational{T}) where T =
-    NT_FastRational(canonical(numerator(x), denominator(x)))
 
 
         
