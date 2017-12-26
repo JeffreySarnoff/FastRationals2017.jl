@@ -15,26 +15,12 @@ import Base: convert, promote_rule, eltype,
 import Base.Checked: add_with_overflow, sub_with_overflow, mul_with_overflow
 
 
-const SysInt = Union{Int64, Int32, Int16, Int8}
-const SignedInt = Union{SysInt, Int128, BigInt}
+const SignedInt = Union{Int64, Int32, Int16, Int8, Int128, BigInt}
 
 # FastRationals are created with denom == abs(denom)
 function canonical(num::T, den::T) where {T<:SignedInt}
     num = flipsign(num, den)
     den = abs(den)
-    no_trailingzeros = num >> trailing_zeros(num)
-    if den >> trailing_zeros(den) !== no_trailingzeros
-        gcdenom = gcd(num, den)
-        num = div(num, gcdenom)
-        den = div(den, gcdenom)
-    else
-        num = no_trailingzeros
-        den = one(T)
-    end
-    return num, den
-end
-
-function canonical(num::T, den::T) where {T<:SysInt}
     gcdenom = gcd(num, den)
     if gcdenom !== one(T)
         num = div(num, gcdenom)
