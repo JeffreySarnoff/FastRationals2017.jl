@@ -399,6 +399,17 @@ end
 show(x::FastRational) = show(STDOUT, FastRational(x))
 @inline show(x::PlainRational) = show(FastRational(x))
 
+function string(x::Vector{Q}) where Q<:FastRational
+    str = string((x...,))
+    str = string("FastRational[", str[2:end-1], "]")
+    return str
+end
+string(x::Vector{Q}) where Q<:PlainRational = string(map(FastRational, x))
+
+function show(io::IO, x::Vector{Q}) where Q<:Union{FastRational, PlainRational}
+    print(io, string(x))
+end
+
 function read(io::IO, ::Type{T}) where T<:FastRational
     num = read(io,T)
     den = read(io,T)
