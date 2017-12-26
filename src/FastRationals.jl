@@ -53,7 +53,7 @@ eltype(x::FastRational) = typeof(x.num)
 
 @inline canonical(x::FastRational) = values(x)
 
-@inline FastRational(num::T, den::T) where T = FastRational(canonical(num, den)...,)
+@inline FastRational(num::T, den::T) where T = FastRational(canonical(num, den))
 @inline FastRational(q::Rational{T}) where T = FastRational((q.num, q.den))
 @inline FastRational(q::PlainRational) = FastRational(canonical(q.num, q.den))
 
