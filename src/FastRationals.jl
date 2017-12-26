@@ -337,170 +337,105 @@ end
 
 
 
+@inline sign(x::FastRational)  = oftype(x, sign(numerator(x)))
+@inline signbit(x::FastRational)  = signbit(numerator(x))
+@inline copysign(x::FastRational{T,R}, y::Real) = FastRational(copysign(numerator(x), y), denominator(x))
+@inline copysign(x::FastRational, y::FastRational)  = FastRational{T,R}(copysign(numerator(x), numerator(y)), denominator(x))
+@inline flipsign(x::FastRational, y::Real)  = FastRational(flipsign(numerator(x), y), denominator(x))
+@inline flipsign(x::FastRational, y::FastRational)  = FastRational(flipsign(numerator(x), numerator(y)), denominator(x))
 
-@inline sign(x::FastRational{T, R})  where {T<:SignedInt, R<:Reduceable} = oftype(x, sign(numer(x)))
-@inline signbit(x::FastRational{T, R})  where {T<:SignedInt, R<:Reduceable} = signbit(numer(x))
-@inline copysign(x::FastRational{T,R}, y::Real) where {T<:SignedInt, R<:Reduceable} = FastRational{T, R}(copysign(numer(x), y), denom(x))
-@inline copysign(x::FastRational{T, R}, y::FastRational{T, R})  where {T<:SignedInt, R<:Reduceable} = FastRational{T,R}(copysign(numer(x), numer(y)), denom(x))
-@inline flipsign(x::FastRational{T, R}, y::Real)  where {T<:SignedInt, R<:Reduceable} = FastRational{T, R}(flipsign(numer(x), y), denom(x))
-@inline flipsign(x::FastRational{T, R}, y::FastRational{T, R})  where {T<:SignedInt, R<:Reduceable} = FastRational{T, R}(flipsign(numer(x), numer(y)), denom(x))
+@inline isinteger(x::FastRational) = abs(denominator(x)) === one(T)
+@inline iszero(x::FastRational)  = abs(numerator(x)) === zero(T)
 
-@inline isinteger(x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = abs(denom(x)) === one(T)
-@inline iszero(x::FastRational{T, R})  where {T<:SignedInt, R<:Reduceable} = abs(numer(x)) === zero(T)
+@inline Base.Math.abs(x::FastRational)   = FastRational(abs(numerator(x)), denominator(x))
 
-@inline Base.Math.abs(x::FastRational{T, R})  where {T<:SignedInt, R<:Reduceable}  = FastRational{T, R}(abs(numer(x)), denom(x))
+@inline Base.Math.inv(x::FastRational)  = FastRational(denominator(x), numerator(x))
 
-@inline Base.Math.inv(x::FastRational{T, R})  where {T<:SignedInt, R<:Reduceable} = FastRational{T, R}(denom(x), numer(x))
-
-@inline function Base.:(-)(x::FastRational{T, R})  where {T<:SignedInt, R<:Reduceable} 
-    numer(x) === typemin(T) && throw(OverflowError())
-    return FastRational{T, R}(-numer(x), denom(x))
+@inline function Base.:(-)(x::FastRational)  
+    numerator(x) === typemin(T) && throw(OverflowError())
+    return FastRational(-numerator(x), denominator(x))
 end
 
-function Base.:(*)(x::FastRational{T, R}, y::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} 
-    ovf = false
-    num, ovfl = mul_with_overflow(numer(x), numer(y))
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
+Base.:(/)(x::FastRational, y::FastRational) = x // y
 
-    if ovf
-       x = isreduced(x) ? x : canonical(x)
-       y = isreduced(y) ? y : canonical(y)
 
-       ovf = false
-       num, ovfl = mul_with_overflow(numer(x), numer(y))
-       ovf |= ovfl
-       den, ovfl = mul_with_overflow(denom(x), denom(y))
-       ovf |= ovfl
+function show(io::IO, x::FastRational)
+    print(io, numerator(z), "//", denominator(z))
+end
 
-       ovf && throw(OverflowError())
-    end
+function show(io::IO, x::PlainRational)
+    num, den = canonical(x)
+    print(io, num, "//", den)
+end
 
-    return FastRational{T, MayReduce}(num, den)
+function read(s::IO, ::Type{T}) where T<:FastRational
+    num = read(s,T)
+    den = read(s,T)
+    return FastRational(num,den)
+end
+
+function write(s::IO, x::FastRational)
+    return write(s, numerator(z), denominator(z))
+end
+
+function read(s::IO, ::Type{T}) where T<:PlainRational
+    num = read(s,T)
+    den = read(s,T)
+    return FastRational(r,i)
+end
+
+function write(s::IO, x::PlainRational)
+    num, den = canonical(x)
+    return write(s, numerator(z), denominator(z))
 end
 
 
-function Base.:(//)(x::FastRational{T, R}, y::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} 
-    ovf = false
-    num, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-
-    if ovf
-       #x = ifelse(isreduced(x), x, canonical(x))
-       #y = ifelse(isreduced(y), y, canonical(y))
-       x = isreduced(x) ? x : canonical(x)
-       y = isreduced(y) ? y : canonical(y)
-
-       ovf = false
-       num, ovfl = mul_with_overflow(numer(x), denom(y))
-       ovf |= ovfl
-       den, ovfl = mul_with_overflow(denom(x), numer(y))
-       ovf |= ovfl
-
-       ovf && throw(OverflowError())
-    end
-
-    return FastRational{T, MayReduce}(num, den)
-end
-
-Base.:(/)(x::FastRational{T, R}, y::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} = x // y
-
-
-function show(io::IO, x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable}
-    z = isreduced(x) ? x : canonical(x)
-    print(io, numer(z), "//", denom(z))
-end
-
-function read(s::IO, ::Type{FastRational{T, R}}) where {T<:SignedInt, R<:Reduceable}
-    r = read(s,T)
-    i = read(s,T)
-    return canonical(r,i)
-end
-
-function write(s::IO, x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable}
-    z = isreduced(x) ? x : canonical(x)
-    return write(s, numer(z), denom(z))
-end
-
-promote_rule(::Type{FastRational{T, R}}, ::Type{Rational{T}}) where {T<:SignedInt, R<:Reduceable} =
-    FastRational{T, R}
-
-Base.promote_type(::Type{FastRational{T, R}}, ::Type{Rational{S}}) where {T<:SignedInt, R<:Reduceable, S<:SignedInt} =
-    sizeof(T) >= sizeof(S) ? FastRational{T, R} : FastRational{S, R}
-
-convert(::Type{FastRational{T, R}}, x::Rational{T}) where {T<:SignedInt, R<:Reduceable} =
-    FastRational(R, numerator(x), denominator(x))
-
-convert(::Type{Rational{T}}, x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} =
-    Rational(numer(x), denom(x))
-
-convert(::Type{Rational{S}}, x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable, S<:SignedInt} =
-    Rational(S(numer(x)), S(denom(x)))
-
-FastRational(x::Rational{T}) where {T<:SignedInt} =
-    convert(FastRational{T, IsReduced}, x)
-
-Rational(x::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} =
-    convert(Rational{T}, x)
-
-Base.:(==)(x::Rational{T}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
+Base.:(==)(x::Rational{T}, y::FastRational) =
    numerator(x) == numerator(y) && denominator(x) == denominator(y)
-Base.:(!=)(x::Rational{T}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   !(x == y)
-Base.:(==)(x::FastRational{T, IsReduced}, y::Rational{T}) where {T<:SignedInt} =
+Base.:(!=)(x::Rational{T}, y::FastRational) = !(x == y)
+Base.:(==)(x::FastRational, y::Rational{T}) =
    numerator(x) == numerator(y) && denominator(x) == denominator(y)
-Base.:(!=)(x::FastRational{T, IsReduced}, y::Rational{T}) where {T<:SignedInt} =
-   !(x == y)
+Base.:(!=)(x::FastRational, y::Rational{T}) = !(x == y)
 
-Base.:(==)(x::Rational{T}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   x == canonical(y)
-Base.:(!=)(x::Rational{T}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   x != canonical(y)
-Base.:(==)(x::FastRational{T, MayReduce}, y::Rational{T}) where {T<:SignedInt} =
-   canonial(x) == y
-Base.:(!=)(x::FastRational{T, MayReduce}, y::Rational{T}) where {T<:SignedInt} =
-   canonical(x) != y
+Base.:(==)(x::Rational{T}, y::PlainRational) = (numerator(x), denominator(x)) == canonical(y)
+Base.:(!=)(x::Rational{T}, y::PlainRational) = (numerator(x), denominator(x)) != canonical(y)
+Base.:(==)(x::PlainRational, y::Rational{T}) = canonical(x) == (numerator(t), denominator(y))
+Base.:(!=)(x::PlainRational, y::Rational{T}) = canonical(x) != (numerator(y), denominator(y))
 
-Base.:(<)(x::Rational{T}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-    x < Rational{T}(y)
-Base.:(<=)(x::Rational{T}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-    x <= Rational{T}(y)
-Base.:(<)(x::FastRational{T, IsReduced}, y::Rational{T}) where {T<:SignedInt} =
-    Rational{T}(x) < y
-Base.:(<=)(x::FastRational{T, IsReduced}, y::Rational{T}) where {T<:SignedInt} =
-    Rational{T}(x) <= y
+Base.:(<)(x::Rational{T}, y::FastRational) = x < Rational{T}(y)
+Base.:(<=)(x::Rational{T}, y::FastRational) = x <= Rational{T}(y)
+Base.:(<)(x::FastRational, y::Rational{T}) = Rational{T}(x) < y
+Base.:(<=)(x::FastRational, y::Rational{T}) = Rational{T}(x) <= y
 
-Base.:(==)(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   numer(x) === numer(y) && denom(x) === denom(y)
-Base.:(!=)(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   numer(x) !== numer(y) || denom(x) !== denom(y)
+Base.:(==)(x::FastRational, y::FastRational) =
+   numerator(x) === numerator(y) && denominator(x) === denominator(y)
+Base.:(!=)(x::FastRational, y::FastRational) =
+   numerator(x) !== numerator(y) || denominator(x) !== denominator(y)
 
 for F in (:(>), :(>=), :(<=), :(<))
-    @eval $F(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   $F(numer(x)*denom(y), numer(y)*denom(x))
+    @eval $F(x::FastRational, y::FastRational) =
+   $F(numerator(x)*denominator(y), numerator(y)*denominator(x))
 end
 
 
 for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
-    @eval $F(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   $F(x, canonical(y))
+    @eval $F(x::FastRational, y::PlainRational) = $F(x, canonical(y))
 end
 for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
-    @eval $F(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduced}) where {T<:SignedInt} =
-   $F(canonical(x), y)
+    @eval $F(x::PlainRational, y::FastRational) = $F(canonical(x), y)
 end
 for F in (:(==), :(!=), :(>), :(>=), :(<=), :(<))
-    @eval $F(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce}) where {T<:SignedInt} =
-   $F(canonical(x), canonical(y))
+    @eval $F(x::PlainRational, y::PlainRational) = $F(canonical(x), canonical(y))
 end
 
 
-Base.isequal(x::FastRational{T, R1}, y::FastRational{T, R2}) where {T<:SignedInt, R1<:Reduceable, R2<:Reduceable} =
-   x == y
-Base.isless(x::FastRational{T, R1}, y::FastRational{T, R2}) where {T<:SignedInt, R1<:Reduceable, R2<:Reduceable} =
-   x < y
+Base.isequal(x::FastRational, y::FastRational) = x == y
+Base.isless(x::FastRational, y::FastRational) = x <= y
+Base.isequal(x::FastRational, y::PlainRational) = x == y
+Base.isless(x::FastRational, y::PlainRational) = x <= y
+Base.isequal(x::PlainRational, y::FastRational) = x == y
+Base.isless(x::PlainRational, y::FastRational) = x <= y
+Base.isequal(x::PlainRational, y::PlainRational) = x == y
+Base.isless(x::PlainRational, y::PlainRational) = x <= y
 
 end # module
