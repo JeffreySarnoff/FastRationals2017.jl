@@ -83,6 +83,30 @@ PlainRational(q::Rational{T}) where T = throw(ErrorException("PlainRational(Rati
 PlainRational(q::FastRational) = throw(ErrorException("PlainRational(FastRational) is disallowed."))
 convert(::Type{PlainRational}, x::FastRational) = throw(ErrorException("conversion from FastRational to PlainRational is disallowed."))
 
+
+
+@inline sign(x::FastRational)  = oftype(x, sign(numerator(x)))
+@inline signbit(x::FastRational)  = signbit(numerator(x))
+@inline copysign(x::FastRational, y::Real) = FastRational(copysign(numerator(x), y), denominator(x))
+@inline copysign(x::FastRational, y::FastRational)  = FastRational{T,R}(copysign(numerator(x), numerator(y)), denominator(x))
+@inline flipsign(x::FastRational, y::Real)  = FastRational(flipsign(numerator(x), y), denominator(x))
+@inline flipsign(x::FastRational, y::FastRational)  = FastRational(flipsign(numerator(x), numerator(y)), denominator(x))
+
+@inline isinteger(x::FastRational) = abs(denominator(x)) === one(T)
+@inline iszero(x::FastRational)  = abs(numerator(x)) === zero(T)
+
+@inline Base.Math.abs(x::FastRational)   = FastRational(abs(numerator(x)), denominator(x))
+
+@inline Base.Math.inv(x::FastRational)  = FastRational(denominator(x), numerator(x))
+
+@inline function Base.:(-)(x::FastRational)  
+    numerator(x) === typemin(T) && throw(OverflowError())
+    return FastRational(-numerator(x), denominator(x))
+end
+
+Base.:(/)(x::FastRational, y::FastRational) = x // y
+
+
 # add
 
 function Base.:(+)(x::FastRational, y::FastRational) 
@@ -327,28 +351,6 @@ end
     return numer, denom, ovf
 end
 
-
-
-@inline sign(x::FastRational)  = oftype(x, sign(numerator(x)))
-@inline signbit(x::FastRational)  = signbit(numerator(x))
-@inline copysign(x::FastRational{T,R}, y::Real) = FastRational(copysign(numerator(x), y), denominator(x))
-@inline copysign(x::FastRational, y::FastRational)  = FastRational{T,R}(copysign(numerator(x), numerator(y)), denominator(x))
-@inline flipsign(x::FastRational, y::Real)  = FastRational(flipsign(numerator(x), y), denominator(x))
-@inline flipsign(x::FastRational, y::FastRational)  = FastRational(flipsign(numerator(x), numerator(y)), denominator(x))
-
-@inline isinteger(x::FastRational) = abs(denominator(x)) === one(T)
-@inline iszero(x::FastRational)  = abs(numerator(x)) === zero(T)
-
-@inline Base.Math.abs(x::FastRational)   = FastRational(abs(numerator(x)), denominator(x))
-
-@inline Base.Math.inv(x::FastRational)  = FastRational(denominator(x), numerator(x))
-
-@inline function Base.:(-)(x::FastRational)  
-    numerator(x) === typemin(T) && throw(OverflowError())
-    return FastRational(-numerator(x), denominator(x))
-end
-
-Base.:(/)(x::FastRational, y::FastRational) = x // y
 
 
 function show(io::IO, x::FastRational)
