@@ -352,14 +352,18 @@ end
 end
 
 
+Base.string(x::FastRational) = string(numerator(x), "//", denominator(x))
+function Base.string(x::PlainRational)
+    num, den = canonical(x)
+    return string(num, "//", den)
+end
 
 function show(io::IO, x::FastRational)
-    print(io, numerator(z), "//", denominator(z))
+    print(io, string(x))
 end
 
 function show(io::IO, x::PlainRational)
-    num, den = canonical(x)
-    print(io, num, "//", den)
+    print(io, string(x))
 end
 
 function read(s::IO, ::Type{T}) where T<:FastRational
