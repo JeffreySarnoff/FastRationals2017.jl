@@ -53,7 +53,7 @@ eltype(x::FastRational) = typeof(x.num)
 
 @inline canonical(x::FastRational) = values(x)
 
-@inline FastRational(num::T, den::T) where T = FastRational((num, den))
+@inline FastRational(num::T, den::T) where T = FastRational(canonical(num, den)...,)
 @inline FastRational(q::Rational{T}) where T = FastRational((q.num, q.den))
 @inline FastRational(q::PlainRational) = FastRational(canonical(q.num, q.den))
 
@@ -82,13 +82,13 @@ convert(::Type{PlainRational}, x::FastRational) = throw(ErrorException("conversi
 @inline isinteger(x::FastRational) = abs(denominator(x)) === one(T)
 @inline iszero(x::FastRational)  = abs(numerator(x)) === zero(T)
 
-@inline abs(x::FastRational)   = FastRational(abs(numerator(x)), denominator(x))
+@inline abs(x::FastRational)   = FastRational((abs(numerator(x)), denominator(x)))
 
-@inline inv(x::FastRational)  = FastRational(denominator(x), numerator(x))
+@inline inv(x::FastRational)  = FastRational((denominator(x), numerator(x)))
 
 @inline function (-)(x::FastRational)  
     numerator(x) === typemin(T) && throw(OverflowError())
-    return FastRational(-numerator(x), denominator(x))
+    return FastRational((-numerator(x), denominator(x)))
 end
 
 (/)(x::FastRational, y::FastRational) = x // y
