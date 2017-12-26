@@ -88,7 +88,7 @@ convert(::Type{PlainRational}, x::FastRational) = throw(ErrorException("conversi
 @inline sign(x::FastRational)  = oftype(x, sign(numerator(x)))
 @inline signbit(x::FastRational)  = signbit(numerator(x))
 @inline copysign(x::FastRational, y::Real) = FastRational(copysign(numerator(x), y), denominator(x))
-@inline copysign(x::FastRational, y::FastRational)  = FastRational{T,R}(copysign(numerator(x), numerator(y)), denominator(x))
+@inline copysign(x::FastRational, y::FastRational)  = FastRational(copysign(numerator(x), numerator(y)), denominator(x))
 @inline flipsign(x::FastRational, y::Real)  = FastRational(flipsign(numerator(x), y), denominator(x))
 @inline flipsign(x::FastRational, y::FastRational)  = FastRational(flipsign(numerator(x), numerator(y)), denominator(x))
 
