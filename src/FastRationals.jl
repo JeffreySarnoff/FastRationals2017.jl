@@ -82,20 +82,7 @@ PlainRational(q::Rational{T}) where T = throw(ErrorException("PlainRational(Rati
 PlainRational(q::FastRational) = throw(ErrorException("PlainRational(FastRational) is disallowed."))
 convert(::Type{PlainRational}, x::FastRational) = throw(ErrorException("conversion from FastRational to PlainRational is disallowed."))
 
-
-@inline function add_with_overflow_for_rational(x, y)
-    ovf = false
-    numer, ovfl = mul_with_overflow(numerator(x), denominator(y)) # here, numer is a temp
-    ovf |= ovfl
-    denom, ovfl = mul_with_overflow(denominator(x), numerator(y)) # here, denom is a temp
-    ovf |= ovfl
-    numer, ovfl = add_with_overflow(numer, denom) # numerator of sum
-    ovf |= ovfl
-    denom, ovfl = mul_with_overflow(denominator(x), denominator(y)) # denominator of sum
-    ovf |= ovfl
-    
-    return numer, denom, ovfl
-end    
+# add
 
 function Base.:(+)(x::FastRational, y::FastRational) 
     numer, denom, ovf = add_with_overflow_for_rational(x, y)
@@ -138,8 +125,122 @@ function Base.:(+)(x::PlainRational, y::FastRational)
     return PlainRational(numer, denom)
 end
 
+Base.:(+)(x::FastRational, y::Rational{T})  where T = (+)(promote(x, y)...)
+Base.:(+)(x::Rational{T}, y::FastRational)  where T = (+)(promote(x, y)...)
+Base.:(+)(x::PlainRational, y::Rational{T}) where T = (+)(promote(x, y)...)
+Base.:(+)(x::Rational{T}, y::PlainRational) where T = (+)(promote(x, y)...)
 
-        
+
+# subtract
+
+function Base.:(-)(x::FastRational, y::FastRational) 
+    numer, denom, ovf = sub_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+    
+    return PlainRational(numer, denom)
+end
+
+function Base.:(-)(x::PlainRational, y::PlainRational) 
+    numer, denom, ovf = sub_with_overflow_for_rational(x, y)
+    !ovf && return PlainRational(numer, denom)
+
+    x = canonize(x)
+    y = canonize(y)
+    numer, denom, ovf = sub_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+
+    return PlainRational(numer, denom)
+end
+
+function Base.:(-)(x::FastRational, y::PlainRational) 
+    numer, denom, ovf = sub_with_overflow_for_rational(x, y)
+    !ovf && return PlainRational(numer, denom)
+
+    y = canonize(y)
+    numer, denom, ovf = sub_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+
+    return PlainRational(numer, denom)
+end
+
+function Base.:(-)(x::PlainRational, y::FastRational) 
+    numer, denom, ovf = sub_with_overflow_for_rational(x, y)
+    !ovf && return PlainRational(numer, denom)
+
+    y = canonize(y)
+    numer, denom, ovf = sub_with_overflow_for_rational(x, y)
+    ovf && throw(OverflowError())
+
+    return PlainRational(numer, denom)
+end
+
+Base.:(-)(x::FastRational, y::Rational{T})  where T = (-)(promote(x, y)...)
+Base.:(-)(x::Rational{T}, y::FastRational)  where T = (-)(promote(x, y)...)
+Base.:(-)(x::PlainRational, y::Rational{T}) where T = (-)(promote(x, y)...)
+Base.:(-)(x::Rational{T}, y::PlainRational) where T = (-)(promote(x, y)...)
+
+
+# core parts of add, sub
+
+@inline function add_with_overflow_for_rational(x, y)
+    ovf = false
+    numer, ovfl = mul_with_overflow(numerator(x), denominator(y)) # here, numer is a temp
+    ovf |= ovfl
+    denom, ovfl = mul_with_overflow(denominator(x), numerator(y)) # here, denom is a temp
+    ovf |= ovfl
+    numer, ovfl = add_with_overflow(numer, denom) # numerator of sum
+    ovf |= ovfl
+    denom, ovfl = mul_with_overflow(denominator(x), denominator(y)) # denominator of sum
+    ovf |= ovfl
+
+    return numer, denom, ovf
+end
+
+@inline function sub_with_overflow_for_rational(x, y)
+    ovf = false
+    numer, ovfl = mul_with_overflow(numerator(x), denominator(y)) # here, numer is a temp
+    ovf |= ovfl
+    denom, ovfl = mul_with_overflow(denominator(x), numerator(y)) # here, denom is a temp
+    ovf |= ovfl
+    numer, ovfl = sub_with_overflow(numer, denom) # numerator of difference
+    ovf |= ovfl
+    denom, ovfl = mul_with_overflow(denominator(x), denominator(y)) # denominator of difference
+    ovf |= ovfl
+
+    return numer, denom, ovf
+end
+
+@inline function mul_with_overflow_for_rational(x, y)
+    ovf = false
+    numer, ovfl = mul_with_overflow(numerator(x), numerator(y))
+    ovf |= ovfl
+    denom, ovfl = mul_with_overflow(denominator(x), denominator(y))
+    ovf |= ovfl
+
+    return numer, denom, ovf
+end
+
+@inline function div_with_overflow_for_rational(x, y)
+    ovf = false
+    numer, ovfl = mul_with_overflow(numerator(x), denominator(y))
+    ovf |= ovfl
+    denom, ovfl = mul_with_overflow(denominator(x), numerator(y))
+    ovf |= ovfl
+
+    return numer, denom, ovf
+end
+
+
+
+
+
+
+
+
+
+
+
+
 @inline sign(x::FastRational{T, R})  where {T<:SignedInt, R<:Reduceable} = oftype(x, sign(numer(x)))
 @inline signbit(x::FastRational{T, R})  where {T<:SignedInt, R<:Reduceable} = signbit(numer(x))
 @inline copysign(x::FastRational{T,R}, y::Real) where {T<:SignedInt, R<:Reduceable} = FastRational{T, R}(copysign(numer(x), y), denom(x))
@@ -158,144 +259,6 @@ end
     numer(x) === typemin(T) && throw(OverflowError())
     return FastRational{T, R}(-numer(x), denom(x))
 end
-
-function Base.:(+)(x::FastRational{T, IsReduced}, y::FastRational{T, IsReduced})  where {T<:SignedInt} 
-    ovf = false
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
-    ovf && throw(OverflowError())
-
-    return FastRational{T, MayReduce}(num, den)
-end
-
-function Base.:(+)(x::FastRational{T, MayReduce}, y::FastRational{T, MayReduce})  where {T<:SignedInt} 
-    ovf = false
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
-    !ovf && return FastRational{T, MayReduce}(num, den)
-
-    x = canonical(x)
-    y = canonical(y)
-
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
-    ovf && throw(OverflowError())
-
-    return FastRational{T, MayReduce}(num, den)
-end
-
-function Base.:(+)(x::FastRational{T, R}, y::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} 
-    ovf = false
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
-    !ovf && return FastRational{T, MayReduce}(num, den)
-
-    x = isreduced(x) ? x : canonical(x)
-    y = isreduced(y) ? y : canonical(y)
-
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
-    ovf && throw(OverflowError())
-
-    return FastRational{T, MayReduce}(num, den)
-end
-
-function Base.:(+)(x::FastRational{T, IsReduced}, y::FastRational{T, MayReduce}) where {T<:SignedInt} 
-    ovf = false
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
-    !ovf && return FastRational{T, MayReduce}(num, den)
-
-    y = canonical(y)
-
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = add_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
-    ovf && throw(OverflowError())
-
-    return FastRational{T, MayReduce}(num, den)
-end
-
-@inline Base.:(+)(x::FastRational{T, MayReduce}, y::FastRational{T, IsReduced})  where {T<:SignedInt} = y+x
-
-function Base.:(-)(x::FastRational{T, R}, y::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} 
-    ovf = false
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = sub_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
-    !ovf && return FastRational{T, MayReduce}(num, den)
-
-    x = isreduced(x) ? x : canonical(x)
-    y = isreduced(y) ? y : canonical(y)
-
-    num_a, ovfl = mul_with_overflow(numer(x), denom(y))
-    ovf |= ovfl
-    num_b, ovfl = mul_with_overflow(denom(x), numer(y))
-    ovf |= ovfl
-    num, ovfl = sub_with_overflow(num_a, num_b)
-    ovf |= ovfl
-    den, ovfl = mul_with_overflow(denom(x), denom(y))
-    ovf |= ovfl
-
-    ovf && throw(OverflowError())
-
-    return FastRational{T, MayReduce}(num, den)
-end
-
 
 function Base.:(*)(x::FastRational{T, R}, y::FastRational{T, R}) where {T<:SignedInt, R<:Reduceable} 
     ovf = false
