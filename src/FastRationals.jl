@@ -396,7 +396,7 @@ function show(io::IO, x::FastRational)
     print(io, string(x))
 end
 @inline show(io::IO, x::PlainRational) = show(io, FastRational(x))
-show(x::FastRational) = show(STDOUT, FastRational(x))
+show(x::FastRational) = show(Base.STDOUT, "text/plain", string(x))
 @inline show(x::PlainRational) = show(FastRational(x))
 
 function string(x::Vector{Q}) where Q<:FastRational
@@ -408,6 +408,9 @@ string(x::Vector{Q}) where Q<:PlainRational = string(map(FastRational, x))
 
 function show(io::IO, x::Vector{Q}) where Q<:Union{FastRational, PlainRational}
     print(io, string(x))
+end
+function show(x::Vector{Q}) where Q<:Union{FastRational, PlainRational}
+    show(Base.STDOUT, "text/plain", string(x))
 end
 
 function read(io::IO, ::Type{T}) where T<:FastRational
