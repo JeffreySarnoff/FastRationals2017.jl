@@ -98,7 +98,7 @@ end
 
 function (+)(x::FastRational, y::FastRational) 
     numer, denom, ovf = add_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x + $y overflowed"))
     
     return PlainRational(numer, denom)
 end
@@ -110,7 +110,7 @@ function (+)(x::PlainRational, y::PlainRational)
     x = canonize(x)
     y = canonize(y)
     numer, denom, ovf = add_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x + $y overflowed"))
 
     return PlainRational(numer, denom)
 end
@@ -121,7 +121,7 @@ function (+)(x::FastRational, y::PlainRational)
 
     y = canonize(y)
     numer, denom, ovf = add_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x + $y overflowed"))
 
     return PlainRational(numer, denom)
 end
@@ -132,7 +132,7 @@ function (+)(x::PlainRational, y::FastRational)
 
     y = canonize(y)
     numer, denom, ovf = add_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x + $y overflowed"))
 
     return PlainRational(numer, denom)
 end
@@ -147,7 +147,7 @@ end
 
 function (-)(x::FastRational, y::FastRational) 
     numer, denom, ovf = sub_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x - $y overflowed"))
     
     return PlainRational(numer, denom)
 end
@@ -159,7 +159,7 @@ function (-)(x::PlainRational, y::PlainRational)
     x = canonize(x)
     y = canonize(y)
     numer, denom, ovf = sub_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x - $y overflowed"))
 
     return PlainRational(numer, denom)
 end
@@ -170,7 +170,7 @@ function (-)(x::FastRational, y::PlainRational)
 
     y = canonize(y)
     numer, denom, ovf = sub_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x - $y overflowed"))
 
     return PlainRational(numer, denom)
 end
@@ -181,7 +181,7 @@ function (-)(x::PlainRational, y::FastRational)
 
     y = canonize(y)
     numer, denom, ovf = sub_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x - $y overflowed"))
 
     return PlainRational(numer, denom)
 end
@@ -195,7 +195,7 @@ end
 
 function (*)(x::FastRational, y::FastRational) 
     numer, denom, ovf = mul_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x * $y overflowed"))
     
     return PlainRational(numer, denom)
 end
@@ -207,7 +207,7 @@ function (*)(x::PlainRational, y::PlainRational)
     x = canonize(x)
     y = canonize(y)
     numer, denom, ovf = mul_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x * $y overflowed"))
 
     return PlainRational(numer, denom)
 end
@@ -218,7 +218,7 @@ function (*)(x::FastRational, y::PlainRational)
 
     y = canonize(y)
     numer, denom, ovf = mul_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x * $y overflowed"))
 
     return PlainRational(numer, denom)
 end
@@ -229,7 +229,7 @@ function (*)(x::PlainRational, y::FastRational)
 
     y = canonize(y)
     numer, denom, ovf = mul_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x * $y overflowed"))
 
     return PlainRational(numer, denom)
 end
@@ -243,7 +243,7 @@ end
 
 function (//)(x::FastRational, y::FastRational) 
     numer, denom, ovf = div_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x // $y overflowed"))
     
     return PlainRational(numer, denom)
 end
@@ -255,7 +255,7 @@ function (//)(x::PlainRational, y::PlainRational)
     x = canonize(x)
     y = canonize(y)
     numer, denom, ovf = div_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x // $y overflowed"))
 
     return PlainRational(numer, denom)
 end
@@ -266,7 +266,7 @@ function (//)(x::FastRational, y::PlainRational)
 
     y = canonize(y)
     numer, denom, ovf = div_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x // $y overflowed"))
 
     return PlainRational(numer, denom)
 end
@@ -277,7 +277,7 @@ function (//)(x::PlainRational, y::FastRational)
 
     y = canonize(y)
     numer, denom, ovf = div_with_overflow_for_rational(x, y)
-    ovf && throw(OverflowError())
+    ovf && throw(OverflowError("$x // $y overflowed"))
 
     return PlainRational(numer, denom)
 end
