@@ -58,7 +58,9 @@ abstract type CanonicalRational{I} <: ObtainedRational{T} end  # already reduced
 @inline numerator(q::T)   where {I, T<:SignedRational{I}} = q.num
 @inline denominator(q::T) where {I, T<:SignedRational{I}} = q.den
 @inline value(q::T) where {I, T<:SignedRational{I}} =
-  numerator(a), denominator(q)
+    numerator(a), denominator(q)
+@inline value(q::T) where {I, T<:Rational{I}} =
+    numerator(a), denominator(q)
 
 
 struct SignedRatio{I} <: ObtainedRational{I}
@@ -83,6 +85,10 @@ SignedRatio(::Type{I}, num::I, den::I) where I<:SignedInt =
 SignedRatio(q::RationalNum{I}) where I<:SignedInt =
     SignedRatio(value(q))
 
+@inline   # applicative constructors work properly
+SignedRatio(q::Rational{I}) where I<:SignedInt =
+    SignedRatio(value(q))
+
 @inline   # tuples pass the given values to the constructor
 RationalNum(numden::Tuple{I,I}) where I<:SignedInt =
     RationalNum(numden[1], numden[2])
@@ -94,6 +100,20 @@ RationalNum(::Type{I}, num::I, den::I) where I<:SignedInt =
 @inline   # applicative constructors work properly
 RationalNum(q::SignedRatio{I}) where I<:SignedInt =
     RationalNum(canonical(numerator(q), denominator(q)))
+
+@inline   # applicative constructors work properly
+RationalNum(q::Rational{I}) where I<:SignedInt =
+    RationalNum(value(q))
+
+# Rational as an applicative constructor
+
+@inline
+Rational(q::SignedRatio{I}) where I<:SignedInt =
+    Rational(RationalNum(q))
+
+@inline
+Rational(q::RationalNum{I}) where I<:SignedInt =
+    Rational(numerator(q), denominator(q))
 
 
 
