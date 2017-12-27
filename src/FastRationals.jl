@@ -63,7 +63,12 @@ abstract type CanonicalRational{I} <: ObtainedRational{T} end  # already reduced
     numerator(a), denominator(q)
 
 
-struct SignedRatio{I} <: ObtainedRational{I}
+mutable struct SignedRatio{I, R} <: ObtainedRational{I}
+    num::I
+    den::I
+end
+
+struct RefinedRatio{I} <: ObtainedRational{I}
     num::I
     den::I
 end
@@ -72,6 +77,7 @@ struct RationalNum{I} <: CanonicalRational{T}
     num::I
     den::I
 end
+
 
 @inline   # tuples pass the given values to the constructor
 SignedRatio(numden::Tuple{I,I}) where I<:SignedInt =
