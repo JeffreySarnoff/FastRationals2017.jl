@@ -103,7 +103,8 @@ RationalNum(::Type{I}, num::I, den::I) where I<:SignedInt =
 
 @inline   # applicative constructors work properly
 RationalNum(q::SignedRatio{I}) where I<:SignedInt =
-    RationalNum(canonical(numerator(q), denominator(q)))
+    q.can ? RationalNum(numerator(q), denominator(q)) :
+            RationalNum(canonical(numerator(q), denominator(q)))
 
 @inline   # applicative constructors work properly
 RationalNum(q::Rational{I}) where I<:SignedInt =
