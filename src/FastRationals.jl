@@ -76,10 +76,10 @@ end
 @inline   # tuples pass the given values to the constructor
 SignedRatio(numden::Tuple{I,I}) where I<:SignedInt =
     SignedRatio(numden[1], numden[2], false)
-SignedRatio(numden::Tuple{I,I,B}) where {B<:Bool, I<:SignedInt} =
+SignedRatio(numden::Tuple{I,I,Bool}) where {I<:SignedInt} =
     SignedRatio(numden...,)
-SignedRatio(numden::Tuple{I,I}, can::B}) where {B<:Bool, I<:SignedInt} =
-    SignedRatio(numden...,)
+SignedRatio(numden::Tuple{I,I}, can::Bool) where {I<:SignedInt} =
+    SignedRatio(numden[1], numden[2], can)
 
 @inline   # explicitly type qualified dispatch *may* modify given values
 SignedRatio(::Type{I}, num::I, den::I) where I<:SignedInt =
