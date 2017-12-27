@@ -48,7 +48,54 @@ function canonical_valued(num::T, den::T) where {T<:SignedInt}
     num = div(num, gcdval)
     den = div(den, gcdval)
     return num, den
-end    
+end
+
+
+abstract type SignedRational{I}    <: Real end
+abstract type ObtainedRational{I}  <: SignedRational{T}   end  # may be reduceable  
+abstract type CanonicalRational{I} <: ObtainedRational{T} end  # already reduced
+
+@inline numerator(q::T)   where {I, T<:SignedRational{I}} = q.num
+@inline denominator(q::T) where {I, T<:SignedRational{I}} = q.den
+@inline value(q::T) where {I, T<:SignedRational{I}} =
+  numerator(a), denominator(q)
+
+
+struct SignedRatio{I} <: ObtainedRational{I}
+    num::I
+    den::I
+end
+
+struct RationalNum{I} <: CanonicalRational{T}
+    num::I
+    den::I
+end
+
+@inline
+SignedRatio(numden::Tuple{I,I}) where I<:SignedInt =
+    SignedRatio(numden[1], numden[2])
+
+@inline
+SignedRatio(::Type{I}, num::I, den::I) where I<:SignedInt =
+    SignedRatio(num, den)
+
+@inline
+SignedRatio(q::RationalNum{I}) where I<:SignedInt =
+    SignedRatio(value(q))
+
+@inline
+RationalNum(numden::Tuple{I,I}) where I<:SignedInt =
+    RationalNum(numden[1], numden[2])
+
+@inline
+RationalNum(::Type{I}, num::I, den::I) where I<:SignedInt =
+    RationalNum(canonical(num, den))
+
+@inline
+RationalNum(q::SignedRatio{I}) where I<:SignedInt =
+    RationalNum(canonical(numerator(q), denominator(q)))
+
+
 
 const PlainRational = NamedTuple{(:num, :den, :void)}
 
