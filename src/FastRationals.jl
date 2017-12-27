@@ -20,11 +20,9 @@ const SignedInt = Union{Int64, Int32, Int16, Int8, Int128, BigInt}
 
 """
     canonical(numerator::T, denominator::T) where T<:Signed
-
 Rational numbers that are finite and normatively bounded by
 the extremal magnitude of an underlying signed type have a
 canonical representation.
-
 - numerator and denominator have no common factors
 - numerator may be negative, zero or positive
 - denominator is strictly positive (d > 0)
@@ -51,39 +49,39 @@ function canonical_valued(num::T, den::T) where {T<:SignedInt}
 end
 
 
-abstract type SignedRational{I}    <: Real end
-abstract type ObtainedRational{I}  <: SignedRational{T}   end  # may be reduceable  
-abstract type CanonicalRational{I} <: ObtainedRational{T} end  # already reduced
+abstract type AbstractRational{Q}  <: Real end  # Q is underlying type (Int64 ?Poly)
+abstract type SignedRational{Q}    <: AbstractRational{Q} end  # may be reduceable  
+abstract type CanonicalRational{Q} <: SignedRational{Q}   end  # already reduced
 
-@inline numerator(q::T)   where {I, T<:SignedRational{I}} = q.num
-@inline denominator(q::T) where {I, T<:SignedRational{I}} = q.den
-@inline value(q::T) where {I, T<:SignedRational{I}} =
+@inline numerator(q::T)   where {Q, T<:AbstractRational{Q}} = q.num
+@inline denominator(q::T) where {Q, T<:AbstractRational{Q}} = q.den
+@inline value(q::T) where {Q, T<:AbstractRational{Q}} =
     numerator(a), denominator(q)
-@inline value(q::T) where {I, T<:Rational{I}} =
+@inline value(q::T) where {Q, T<:Rational{Q}} =
     numerator(a), denominator(q)
 
 
-mutable struct SignedRatio{I, R} <: ObtainedRational{I}
-    num::I
-    den::I
+mutable struct SignedRatio{Q} <: SignedRational{Q}
+    num::Q    # numerator
+    den::Q    # denominator > 0
+    can::Bool # in canonical form?
 end
 
-struct RefinedRatio{I} <: ObtainedRational{I}
-    num::I
-    den::I
-end
-
-struct RationalNum{I} <: CanonicalRational{T}
-    num::I
-    den::I
+struct RationalNum{Q} <: CanonicalRational{Q}
+    num::Q
+    den::Q
 end
 
 
 @inline   # tuples pass the given values to the constructor
 SignedRatio(numden::Tuple{I,I}) where I<:SignedInt =
-    SignedRatio(numden[1], numden[2])
+    SignedRatio(numden[1], numden[2], false)
+SignedRatio(numden::Tuple{I,I,B}) where {B<:Bool, I<:SignedInt} =
+    SignedRatio(numden...,)
+SignedRatio(numden::Tuple{I,I}, can::B}) where {B<:Bool, I<:SignedInt} =
+    SignedRatio(numden...,)
 
-@inline   # explicit dispatch *may* modify given values
+@inline   # explicitly type qualified dispatch *may* modify given values
 SignedRatio(::Type{I}, num::I, den::I) where I<:SignedInt =
     SignedRatio(num, den)
 
@@ -99,7 +97,7 @@ SignedRatio(q::Rational{I}) where I<:SignedInt =
 RationalNum(numden::Tuple{I,I}) where I<:SignedInt =
     RationalNum(numden[1], numden[2])
 
-@inline   # explicit dispatch *may* modify given values
+@inline   # explicitly type qualified dispatch *may* modify given values
 RationalNum(::Type{I}, num::I, den::I) where I<:SignedInt =
     RationalNum(canonical(num, den))
 
@@ -519,4 +517,3 @@ end
 
 
 end # module
-
