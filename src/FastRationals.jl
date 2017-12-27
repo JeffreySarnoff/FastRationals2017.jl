@@ -71,27 +71,27 @@ struct RationalNum{I} <: CanonicalRational{T}
     den::I
 end
 
-@inline
+@inline   # tuples pass the given values to the constructor
 SignedRatio(numden::Tuple{I,I}) where I<:SignedInt =
     SignedRatio(numden[1], numden[2])
 
-@inline
+@inline   # explicit dispatch *may* modify given values
 SignedRatio(::Type{I}, num::I, den::I) where I<:SignedInt =
     SignedRatio(num, den)
 
-@inline
+@inline   # applicative constructors work properly
 SignedRatio(q::RationalNum{I}) where I<:SignedInt =
     SignedRatio(value(q))
 
-@inline
+@inline   # tuples pass the given values to the constructor
 RationalNum(numden::Tuple{I,I}) where I<:SignedInt =
     RationalNum(numden[1], numden[2])
 
-@inline
+@inline   # explicit dispatch *may* modify given values
 RationalNum(::Type{I}, num::I, den::I) where I<:SignedInt =
     RationalNum(canonical(num, den))
 
-@inline
+@inline   # applicative constructors work properly
 RationalNum(q::SignedRatio{I}) where I<:SignedInt =
     RationalNum(canonical(numerator(q), denominator(q)))
 
