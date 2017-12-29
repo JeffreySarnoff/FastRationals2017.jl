@@ -34,13 +34,11 @@ function canonical(num::T, den::T) where {T<:SignedInt}
     return num, den
 end
 
-@inline
-function canonical_signed(num::T, den::T) where {T<:SignedInt}
+@inline function canonical_signed(num::T, den::T) where {T<:SignedInt}
     return flipsign(num, den), abs(den)
 end
 
-@inline 
-function canonical_valued(num::T, den::T) where {T<:SignedInt}
+@inline function canonical_valued(num::T, den::T) where {T<:SignedInt}
     gcdval = gcd(num, den)
     gcdval === one(T) && return num, den
     num = div(num, gcdval)
@@ -72,52 +70,49 @@ struct RationalNum{Q} <: CanonicalRational{Q}
     den::Q
 end
 
-
-@inline   # tuples pass the given values to the constructor
-SignedRatio(numden::Tuple{I,I}) where I<:SignedInt =
+# tuples pass the given values to the constructor
+@inline SignedRatio(numden::Tuple{I,I}) where I<:SignedInt =
     SignedRatio(numden[1], numden[2], false)
 SignedRatio(numden::Tuple{I,I,Bool}) where {I<:SignedInt} =
     SignedRatio(numden...,)
 SignedRatio(numden::Tuple{I,I}, can::Bool) where {I<:SignedInt} =
     SignedRatio(numden[1], numden[2], can)
 
-@inline   # explicitly type qualified dispatch *may* modify given values
-SignedRatio(::Type{I}, num::I, den::I) where I<:SignedInt =
+# explicitly type qualified dispatch *may* modify given values
+@inline SignedRatio(::Type{I}, num::I, den::I) where I<:SignedInt =
     SignedRatio(num, den)
 
 @inline   # applicative constructors work properly
 SignedRatio(q::RationalNum{I}) where I<:SignedInt =
     SignedRatio(value(q))
 
-@inline   # applicative constructors work properly
-SignedRatio(q::Rational{I}) where I<:SignedInt =
+# applicative constructors work properly
+@inline SignedRatio(q::Rational{I}) where I<:SignedInt =
     SignedRatio(value(q))
 
-@inline   # tuples pass the given values to the constructor
-RationalNum(numden::Tuple{I,I}) where I<:SignedInt =
+# tuples pass the given values to the constructor
+@inline RationalNum(numden::Tuple{I,I}) where I<:SignedInt =
     RationalNum(numden[1], numden[2])
 
-@inline   # explicitly type qualified dispatch *may* modify given values
-RationalNum(::Type{I}, num::I, den::I) where I<:SignedInt =
+# explicitly type qualified dispatch *may* modify given values
+@inline RationalNum(::Type{I}, num::I, den::I) where I<:SignedInt =
     RationalNum(canonical(num, den))
 
-@inline   # applicative constructors work properly
-RationalNum(q::SignedRatio{I}) where I<:SignedInt =
+# applicative constructors work properly
+@inline RationalNum(q::SignedRatio{I}) where I<:SignedInt =
     q.can ? RationalNum(numerator(q), denominator(q)) :
             RationalNum(canonical(numerator(q), denominator(q)))
 
-@inline   # applicative constructors work properly
-RationalNum(q::Rational{I}) where I<:SignedInt =
+# applicative constructors work properly
+@inline RationalNum(q::Rational{I}) where I<:SignedInt =
     RationalNum(value(q))
 
 # Rational as an applicative constructor
 
-@inline
-Rational(q::SignedRatio{I}) where I<:SignedInt =
+@inlinevRational(q::SignedRatio{I}) where I<:SignedInt =
     Rational(RationalNum(q))
 
-@inline
-Rational(q::RationalNum{I}) where I<:SignedInt =
+@inline Rational(q::RationalNum{I}) where I<:SignedInt =
     Rational(numerator(q), denominator(q))
 
 
