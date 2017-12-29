@@ -82,8 +82,8 @@ SignedRatio(numden::Tuple{I,I}, can::Bool) where {I<:SignedInt} =
 @inline SignedRatio(::Type{I}, num::I, den::I) where I<:SignedInt =
     SignedRatio(num, den)
 
-@inline   # applicative constructors work properly
-SignedRatio(q::RationalNum{I}) where I<:SignedInt =
+# applicative constructors work properly
+@inline SignedRatio(q::RationalNum{I}) where I<:SignedInt =
     SignedRatio(value(q))
 
 # applicative constructors work properly
