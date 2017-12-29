@@ -18,6 +18,10 @@ import Base.Checked: add_with_overflow, sub_with_overflow, mul_with_overflow
 
 const SignedInt = Union{Int64, Int32, Int16, Int8, Int128, BigInt}
 
+if !isdefined(:NamedTuple)
+    using NamedTuples
+end
+
 """
     canonical(numerator::T, denominator::T) where T<:Signed
 Rational numbers that are finite and normatively bounded by
