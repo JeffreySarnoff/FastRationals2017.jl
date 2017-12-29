@@ -109,7 +109,7 @@ SignedRatio(numden::Tuple{I,I}, can::Bool) where {I<:SignedInt} =
 
 # Rational as an applicative constructor
 
-@inlinevRational(q::SignedRatio{I}) where I<:SignedInt =
+@inline Rational(q::SignedRatio{I}) where I<:SignedInt =
     Rational(RationalNum(q))
 
 @inline Rational(q::RationalNum{I}) where I<:SignedInt =
