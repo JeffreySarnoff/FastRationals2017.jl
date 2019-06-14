@@ -26,8 +26,8 @@ numer_b, denom_b = Int32(100), Int32(17)
 a = Rational(numer_a, denom_a); b = Rational(numer_b, denom_b);
 afast = FastRational(numer_a, denom_a); bfast = FastRational(numer_b, denom_b);
                                                              
-fld( (@fastest_time $a + $b), (@fastest_time $afast + $bfast) )  # I get 20x
-fld( (@fastest_time $a * $b), (@fastest_time $afast * $bfast) )  # I get 40x
+fld( (@fastest_time Ref($a)[] + Ref($b)[]), (@fastest_time Ref($afast)[] + Ref($bfast)[]) )  # I get 27x
+fld( (@fastest_time $a * $b), (@fastest_time $afast * $bfast) )  # I get 9x
 
 # using Int64s
 
@@ -37,7 +37,7 @@ a = Rational(numer_a, denom_a); b = Rational(numer_b, denom_b);
 afast = FastRational(numer_a, denom_a); bfast = FastRational(numer_b, denom_b);
 
 fld( (@fastest_time $a + $b), (@fastest_time $afast + $bfast) )  # I get 8x
-fld( (@fastest_time $a * $b), (@fastest_time $afast * $bfast) )  # I get 10x
+fld( (@fastest_time $a * $b), (@fastest_time $afast * $bfast) )  # I get 9x
 
 # using Int128s
 
