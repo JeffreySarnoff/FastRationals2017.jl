@@ -1,4 +1,4 @@
-module FastRationals
+module FastRationals2017
 
 export FastRational
 
