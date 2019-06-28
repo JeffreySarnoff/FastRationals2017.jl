@@ -476,9 +476,6 @@ isless(x::PlainRational, y::FastRational) = x <= y
 isequal(x::PlainRational, y::PlainRational) = x == y
 isless(x::PlainRational, y::PlainRational) = x <= y
 
-
-
-
 string(x::FastRational) = string(numerator(x), "//", denominator(x))
 @inline string(x::PlainRational) = string(FastRational(x))
 
